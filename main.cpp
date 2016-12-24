@@ -4,11 +4,11 @@
 #include <glut/glut.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <time.h>
 
 
 float fTranslate;
-float fRotate;
+float fRotate=-16;
 float fScale = 1.0f;	// set inital scale value to 1.0f
 
 bool bPersp = true;
@@ -21,7 +21,62 @@ GLint num =10;
 
 float eye[] = { 0, 0,  0};
 float center[] = { 0, 0, 25 };
+float move_x, move_y, move_z;
+GLint number[10000];
 
+void Draw_barrier(int i)
+{
+    glColor3f(1, 0, 1);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    
+    
+    glPushMatrix();
+    
+    glRotatef(36*number[i], 0, 0, 1);       // rotate to a random angle
+    glTranslatef(3, -8, 25);
+    glTranslatef(move_x, move_y, move_z);
+    glRotatef(0, 1, 0, 0);
+    glRotatef(10, 0, 0, 1);
+    glRotatef(-20, 0, 1, 0);
+    
+
+    glBegin(GL_TRIANGLES);
+    
+    glVertex3f(0, 2.5, 0);
+    glVertex3f(-1.5, 0, 1.5);
+    glVertex3f(1.5, 0, 1.5);
+    
+    glVertex3f(0, 2.5, 0);
+    glVertex3f(-1.5, 0, 1.5);
+    glVertex3f(-1.5, 0, -1.5);
+    
+    glVertex3f(0, 2.5, 0);
+    glVertex3f(-1.5, 0, -1.5);
+    glVertex3f(1.5, 0, -1.5);
+    
+    glVertex3f(0, 2.5, 0);
+    glVertex3f(1.5, 0, -1.5);
+    glVertex3f(1.5, 0, 1.5);
+    
+    glVertex3f(0, -2.5, 0);
+    glVertex3f(-1.5, 0, 1.5);
+    glVertex3f(1.5, 0, 1.5);
+    
+    glVertex3f(0, -2.5, 0);
+    glVertex3f(-1.5, 0, 1.5);
+    glVertex3f(-1.5, 0, -1.5);
+    
+    glVertex3f(0, -2.5, 0);
+    glVertex3f(-1.5, 0, -1.5);
+    glVertex3f(1.5, 0, -1.5);
+    
+    glVertex3f(0, -2.5, 0);
+    glVertex3f(1.5, 0, -1.5);
+    glVertex3f(1.5, 0, 1.5);
+    glEnd();
+    
+    glPopMatrix();
+}
 
 void updateView(int width, int height)
 {
@@ -75,11 +130,11 @@ void key(unsigned char k, int x, int y)
         case 'o': {bWire = !bWire; break; }
             
         case 'a': {
-            fRotate+=3;
+            fRotate-=36;
             break;
         }
         case 'd': {
-            fRotate-=3;
+            fRotate+=36;
             break;
         }
         case 'w': {
@@ -135,9 +190,8 @@ void redraw()
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
     
-    
     glRotatef(fRotate, 0, 0, 1.0f);
-    
+
     glScalef(0.2, 0.2, 0.2);
     
     
@@ -154,8 +208,7 @@ void redraw()
     //gluQuadricNormals(qobj, GLU_FLAT);
     glColor3f(1,1,1);
     gluQuadricDrawStyle(qobj, GLU_FILL); // all polygons wireframe
-    gluCylinder(qobj, 10, 10,10*num, 10,num);
-    
+    gluCylinder(qobj, 10, 10, 10*num, 10,num);
     
     glPopMatrix();
     
@@ -164,15 +217,30 @@ void redraw()
     gluQuadricDrawStyle(qobj2, GLU_LINE);
     
     
-    
-    
-    
     gluCylinder(qobj2, 10, 10,10*num, 10,num);
+    
+    // barriers
+    for (int i=0;i<num/2;i++)
+    {
+        if (number[0] == 0)         // set random positions
+        {
+            srand((int)time(0));
+            for (int j=0;j<num/2;j++) number[j] = rand() % 10 + 1;
+        }
+        move_x = 0;
+        move_y = 0;
+        move_z = i*10;      // position in z axis
+        Draw_barrier(i);
+    }
     
     if (run) {
         num=num+1;
         eye[2] += 0.1f;
         center[2] += 0.1f;
+        if (number[num/2] == 0)
+        {
+            number[num/2] = rand() % 10 + 1;
+        }
     }
     
     
@@ -186,7 +254,7 @@ int main(int argc, char *argv[])
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-    glutInitWindowSize(800, 800);
+    glutInitWindowSize(700, 800);
     int windowHandle = glutCreateWindow("Simple GLUT App");
     
     glutDisplayFunc(redraw);
