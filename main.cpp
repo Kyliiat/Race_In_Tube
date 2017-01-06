@@ -7,7 +7,7 @@
 #define PI 3.141592654
 
 float fTranslate;
-float fRotate=-16;
+float fRotate=0;
 float fScale = 1.0f;	// set inital scale value to 1.0f
 
 bool bPersp = true;
@@ -18,17 +18,21 @@ int wHeight = 0;
 int wWidth = 0;
 GLint num =10;
 
-float eye[] = { 0, 4, -6};
-float center[] = { 0, 0, 8 };
+float eye[] = { 0, 6, -2};
+float center[] = { 0, 0, 10 };
 float move_x, move_y, move_z;
 GLint number[10000];
 bool Open = false;      // 从上面展开
-bool OutClose = false;  // 闭合，结束状态在管道外面
+bool OutClose = false;  // 闭合，结束状态在管道外部/内部
 bool OutOpen = false;   // 从下面展开，然后平移
-bool InClose = false;   // 闭合，结束状态在管道内部
 int stage = 0;
 int flag = 0;
+int flag2 = 0;
+int s = 0;
 double positionY = 3.078;
+
+int change = 0;     // when [time] have a change
+int changeTime = 1000;
 
 void drawGrid(int num, int offset)
 {
@@ -51,9 +55,9 @@ void drawGrid(int num, int offset)
     // decide where the grid is
     if (Open == true)       // open the tube
     {
-        if (OutClose == true) Open = false;     // 下一个状态：管道闭合
-        if (flag > 7) stage++;          // adjust the speed
-        if (flag <= 7) flag++;
+//        if (OutClose == true) Open = false;     // 下一个状态：管道闭合
+        if (flag > 4*num) stage++;          // adjust the speed
+        if (flag <= 4*num) flag++;
         else flag = 0;
         
         double DeltaX82 = 2*(cos(((36-(0.036*stage))/180)*PI)-cos((36.0/180)*PI));
@@ -208,9 +212,9 @@ void drawGrid(int num, int offset)
     }
     else if (OutClose == true)      // 结束状态是在管道外走
     {
-        if (OutOpen == true) OutClose = false;  // 下一个状态是从下面展开
-        if (flag > 7) stage--;          // adjust the speed
-        if (flag <= 7) flag++;
+//        if (OutOpen == true) OutClose = false;  // 下一个状态是从下面展开
+        if (flag > 4*num) stage--;          // adjust the speed
+        if (flag <= 4*num) flag++;
         else flag = 0;
         
         double DeltaX82 = 2*(cos(((36-(0.036*stage))/180)*PI)-cos((36.0/180)*PI));
@@ -374,8 +378,8 @@ void drawGrid(int num, int offset)
     }
     else if (OutOpen == true)       // open from the bottom
     {
-        if (flag > 7) stage++;          // adjust the speed
-        if (flag <= 7) flag++;
+        if (flag > 4*num) stage++;          // adjust the speed
+        if (flag <= 4*num) flag++;
         else flag = 0;
         
         if (stage >= 1000)
@@ -708,29 +712,29 @@ void key(unsigned char k, int x, int y)
         case 'm': {
             stage = 0;
             flag = 0;
+            OutClose = false;
+            OutOpen = false;
             Open = true;
             break;
         }
         case 'n': {
             stage = 1000;
             flag = 0;
+            Open = false;
+            OutOpen = false;
             OutClose = true;
             break;
         }
         case 'b': {
             stage = 0;
             flag = 0;
+            Open = false;
+            OutClose = false;
             OutOpen = true;
             positionY = 3.078;
             break;
         }
-        case 'v': {
-            stage = 1000;
-            flag = 0;
-            InClose = true;
-            break;
-        }
-            
+         
             
     }
     
@@ -757,11 +761,75 @@ void redraw()
 
 //    glScalef(0.2, 0.2, 0.2);
     
+    flag2 += 1;
+    if (flag2 > 50) flag2 = 0;
+    
     for (int q=0;q<num;q++)         // number of cylinders
     {
         for (i=0;i<10;i++)
         {
             drawGrid(i, q);
+        }
+    }
+    
+    // change mode
+    if (run)
+    {
+        change++;
+        if (change == changeTime)
+        {
+            change = 0;
+            srand((unsigned int)time(0));
+            changeTime = random() % 500 + 500;
+            
+            // change
+            if (!Open && !OutOpen && !OutClose)     // 在管道里面
+            {
+                if (random() % 2 == 0)
+                {
+                    stage = 0;
+                    flag = 0;
+                    Open = true;
+                }
+                else
+                {
+                    positionY = 3.078;
+                    flag = 0;
+                    stage = 0;
+                    OutOpen = true;
+                }
+            }
+            else if (Open)      // 展开状态
+            {
+                Open = false;
+                stage = 1000;
+                flag = 0;
+                OutClose = true;    // 关闭，在管道里面
+            }
+            else if (OutOpen)   // 展开
+            {
+                OutOpen = false;
+                stage = 1000;
+                flag = 0;
+                OutClose = true;    // 关闭
+            }
+            else if (OutClose)
+            {
+                OutClose = false;
+                if (random() % 2 == 0)
+                {
+                    stage = 0;
+                    flag = 0;
+                    Open = true;
+                }
+                else
+                {
+                    positionY = 3.078;
+                    flag = 0;
+                    stage = 0;
+                    OutOpen = true;
+                }
+            }
         }
     }
     
@@ -803,15 +871,16 @@ void redraw()
 //        move_z = i*10;      // position in z axis
 //        Draw_barrier(i);
 //    }
-//    
+//
+    
     if (run) {
-        num=num+1;
+        if (flag2 == 10) num=num+1;
         eye[2] += 0.1f;
         center[2] += 0.1f;
-        if (number[num/2] == 0)
-        {
-            number[num/2] = rand() % 10 + 1;
-        }
+//        if (number[num/2] == 0)
+//        {
+//            number[num/2] = rand() % 10 + 1;
+//        }
     }
 //
     
