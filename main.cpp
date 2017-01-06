@@ -19,10 +19,54 @@ int wHeight = 0;
 int wWidth = 0;
 GLint num =10;
 
-float eye[] = { 0, 0,  0};
-float center[] = { 0, 0, 25 };
+float eye[] = { 0, 4, -6};
+float center[] = { 0, 0, 8 };
 float move_x, move_y, move_z;
 GLint number[10000];
+
+void drawGrid(int num, int pace, int offset)
+{
+    glColor3f(1, 1, 1);
+    glBegin(GL_LINES);
+    glColor3f(1, 0, 0);
+    glVertex3f(0, 0, 0);
+    glVertex3f(20, 0, 0);
+    
+    glColor3f(0, 1, 0);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, 20, 0);
+    
+    glColor3f(0, 0, 1);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, 0, 20);
+    glEnd();
+    
+    glPushMatrix();
+    glRotatef(36*num, 0, 0, 1);
+    glTranslatef(0, -3.078, offset*5);
+    
+    glColor3f(1, 1, 1);
+    glBegin(GL_QUADS);
+    glVertex3f(-1, 0, 0);
+    glVertex3f(1, 0, 0);
+    glVertex3f(1, 0, 5);
+    glVertex3f(-1, 0, 5);
+    glEnd();
+    
+    glColor3f(0, 0, 0);
+    glBegin(GL_LINES);
+    glVertex3f(-1, 0, 0);
+    glVertex3f(1, 0, 0);
+    glVertex3f(1, 0, 0);
+    glVertex3f(1, 0, 5);
+    glVertex3f(1, 0, 5);
+    glVertex3f(-1, 0, 5);
+    glVertex3f(-1, 0, 5);
+    glVertex3f(-1, 0, 0);
+    glEnd();
+    
+    glPopMatrix();
+}
 
 void Draw_barrier(int i)
 {
@@ -80,14 +124,15 @@ void Draw_barrier(int i)
 
 void updateView(int width, int height)
 {
-    glViewport(0, 0, width, height);						// Reset The Current Viewport
+    glViewport(0, 0, width, height);
+    // Reset The Current Viewport
     
     glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
     glLoadIdentity();									// Reset The Projection Matrix
     
     float whRatio = (GLfloat)width / (GLfloat)height;
     if (bPersp) {
-        gluPerspective(45.0f, whRatio, 0.1f, 100.0f);
+        gluPerspective(90.0f, whRatio, 0.1f, 100.0f);
         //glFrustum(-3, 3, -3, 3, 3,100);
     }
     else {
@@ -175,6 +220,7 @@ void key(unsigned char k, int x, int y)
 
 void redraw()
 {
+    int i;
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();									// Reset The Current Modelview Matrix
@@ -192,47 +238,55 @@ void redraw()
     
     glRotatef(fRotate, 0, 0, 1.0f);
 
-    glScalef(0.2, 0.2, 0.2);
+//    glScalef(0.2, 0.2, 0.2);
     
-    
-    GLUquadricObj *qobj;
-    GLUquadricObj *qobj2;
-    qobj = gluNewQuadric();
-    qobj2 = gluNewQuadric();
-    
-    GLfloat line[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    GLfloat clear[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    glPushMatrix();
-    
-    //gluQuadricDrawStyle(qobj, GLU_LINE); /* flat shaded */
-    //gluQuadricNormals(qobj, GLU_FLAT);
-    glColor3f(1,1,1);
-    gluQuadricDrawStyle(qobj, GLU_FILL); // all polygons wireframe
-    gluCylinder(qobj, 10, 10, 10*num, 10,num);
-    
-    glPopMatrix();
-    
-    
-    glColor3f(0,0,0);
-    gluQuadricDrawStyle(qobj2, GLU_LINE);
-    
-    
-    gluCylinder(qobj2, 10, 10,10*num, 10,num);
-    
-    // barriers
-    for (int i=0;i<num/2;i++)
+    for (int q=0;q<num;q++)         // number of cylinders
     {
-        if (number[0] == 0)         // set random positions
+        for (i=0;i<10;i++)
         {
-            srand((int)time(0));
-            for (int j=0;j<num/2;j++) number[j] = rand() % 10 + 1;
+            drawGrid(i, 0, q);
         }
-        move_x = 0;
-        move_y = 0;
-        move_z = i*10;      // position in z axis
-        Draw_barrier(i);
     }
     
+    
+//    GLUquadricObj *qobj;
+//    GLUquadricObj *qobj2;
+//    qobj = gluNewQuadric();
+//    qobj2 = gluNewQuadric();
+//    
+//    GLfloat line[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+//    GLfloat clear[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+//    glPushMatrix();
+//    
+//    //gluQuadricDrawStyle(qobj, GLU_LINE); /* flat shaded */
+//    //gluQuadricNormals(qobj, GLU_FLAT);
+//    glColor3f(1,1,1);
+//    gluQuadricDrawStyle(qobj, GLU_FILL); // all polygons wireframe
+//    gluCylinder(qobj, 10, 10, 10*num, 10,num);
+//    
+//    glPopMatrix();
+//    
+//    
+//    glColor3f(0,0,0);
+//    gluQuadricDrawStyle(qobj2, GLU_LINE);
+//    
+//    
+//    gluCylinder(qobj2, 10, 10,10*num, 10,num);
+//
+//    // barriers
+//    for (int i=0;i<num/2;i++)
+//    {
+//        if (number[0] == 0)         // set random positions
+//        {
+//            srand((int)time(0));
+//            for (int j=0;j<num/2;j++) number[j] = rand() % 10 + 1;
+//        }
+//        move_x = 0;
+//        move_y = 0;
+//        move_z = i*10;      // position in z axis
+//        Draw_barrier(i);
+//    }
+//    
     if (run) {
         num=num+1;
         eye[2] += 0.1f;
@@ -242,7 +296,7 @@ void redraw()
             number[num/2] = rand() % 10 + 1;
         }
     }
-    
+//
     
     
     if (bAnim) fRotate += 0.1f;
@@ -254,8 +308,8 @@ int main(int argc, char *argv[])
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-    glutInitWindowSize(700, 800);
-    int windowHandle = glutCreateWindow("Simple GLUT App");
+    glutInitWindowSize(1700, 800);
+    int windowHandle = glutCreateWindow("Tube");
     
     glutDisplayFunc(redraw);
     glutReshapeFunc(reshape);
