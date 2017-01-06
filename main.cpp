@@ -1,11 +1,10 @@
-// glutEx1.cpp : ∂®“Âøÿ÷∆Ã®”¶”√≥Ã–Úµƒ»Îø⁄µ„°£
-//
-
 #include <glut/glut.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <math.h>
 
+#define PI 3.141592654
 
 float fTranslate;
 float fRotate=-16;
@@ -25,6 +24,7 @@ float move_x, move_y, move_z;
 GLint number[10000];
 bool Open = false;
 int stage = 0;
+int flag = 0;
 
 void drawGrid(int num, int offset)
 {
@@ -47,12 +47,24 @@ void drawGrid(int num, int offset)
     // decide where the grid is
     if (Open == true)       // open the tube
     {
+        if (flag > 7) stage++;          // adjust the speed
+        if (flag <= 7) flag++;
+        else flag = 0;
+        
+        double DeltaX82 = 2*(cos(((36-(0.036*stage))/180)*PI)-cos((36.0/180)*PI));
+        double DeltaY82 = 2*(sin((36.0/180)*PI)-sin(((36-(0.036*stage))/180)*PI));
+        double DeltaX73 = 2*(cos(((72-(0.072*stage))/180)*PI)-cos((72.0/180)*PI));
+        double DeltaY73 = 2*(sin((72.0/180)*PI)-sin(((72-(0.072*stage))/180)*PI));
+        double DeltaX64 = 2*(cos(((108-(0.108*stage))/180)*PI)-cos((108.0/180)*PI));
+        double DeltaY64 = 2*(sin((108.0/180)*PI)-sin(((108-(0.108*stage))/180)*PI));
+        double DeltaX55 = 2*(cos(((144-(0.144*stage))/180)*PI)-cos((144.0/180)*PI));
+        double DeltaY55 = 2*(sin((144.0/180)*PI)-sin(((144-(0.144*stage))/180)*PI));
+        
         if (num == 9)
         {
             if (stage < 1000)
             {
-                stage++;
-                glRotatef(36*num, 0, 0, 1);         // 绕中轴转
+                glRotatef(36*num, 0, 0, 1);         // 绕z轴转
                 glTranslatef(1, -3.078, offset*5);
                 glRotatef(0.036*stage, 0, 0, 1);    // 绕自己轴转
                 glTranslatef(-1, 0, 0);
@@ -67,18 +79,111 @@ void drawGrid(int num, int offset)
         {
             if (stage < 1000)
             {
-                stage++;
+                glTranslatef(-DeltaX82, -DeltaY82, 0);      // 微平移来进行衔接
+                glRotatef(36*num, 0, 0, 1);             // 绕z轴旋转
+                glTranslatef(1, -3.078, offset*5);      // 平移
+                glRotatef(0.072*stage, 0, 0, 1);        // 绕自己轴转
+                glTranslatef(-1, 0, 0);      // 平移
             }
             else
             {
                 glTranslatef(-4, -3.078, offset*5);
             }
         }
+        else if (num == 7)
+        {
+            if (stage < 1000)
+            {
+                glTranslatef(-DeltaX82-DeltaX73, -DeltaY82-DeltaY73, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(1, -3.078, offset*5);
+                glRotatef(0.108*stage, 0, 0, 1);
+                glTranslatef(-1, 0, 0);
+            }
+            else
+            {
+                glTranslatef(-6, -3.078, offset*5);
+            }
+        }
+        else if (num == 6)
+        {
+            if (stage < 1000)
+            {
+                glTranslatef(-DeltaX82-DeltaX73-DeltaX64, -DeltaY82-DeltaY73-DeltaY64, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(1, -3.078, offset*5);
+                glRotatef(0.144*stage, 0, 0, 1);
+                glTranslatef(-1, 0, 0);
+            }
+            else
+            {
+                glTranslatef(-8, -3.078, offset*5);
+            }
+        }
+        else if (num == 5)      // put 5 on the left part (with 4,3,2,1)
+        {
+            if (stage < 1000)
+            {
+                glTranslatef(DeltaX82+DeltaX73+DeltaX64+DeltaX55, -DeltaY82-DeltaY73-DeltaY64-DeltaY55, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(-1, -3.078, offset*5);
+                glRotatef(-0.180*stage, 0, 0, 1);
+                glTranslatef(1, 0, 0);
+            }
+            else
+            {
+                glTranslatef(10, -3.078, offset*5);
+            }
+        }
+        else if (num == 4)
+        {
+            if (stage < 1000)
+            {
+                glTranslatef(DeltaX82+DeltaX73+DeltaX64, -DeltaY82-DeltaY73-DeltaY64, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(-1, -3.078, offset*5);
+                glRotatef(-0.144*stage, 0, 0, 1);
+                glTranslatef(1, 0, 0);
+            }
+            else
+            {
+                glTranslatef(8, -3.078, offset*5);
+            }
+        }
+        else if (num == 3)
+        {
+            if (stage < 1000)
+            {
+                glTranslatef(DeltaX82+DeltaX73, -DeltaY82-DeltaY73, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(-1, -3.078, offset*5);
+                glRotatef(-0.108*stage, 0, 0, 1);
+                glTranslatef(1, 0, 0);
+            }
+            else
+            {
+                glTranslatef(6, -3.078, offset*5);
+            }
+        }
+        else if (num == 2)
+        {
+            if (stage < 1000)
+            {
+                glTranslatef(DeltaX82, -DeltaY82, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(-1, -3.078, offset*5);      // 平移
+                glRotatef(-0.072*stage, 0, 0, 1);        // 绕自己轴转
+                glTranslatef(1, 0, 0);      // 平移
+            }
+            else
+            {
+                glTranslatef(4, -3.078, offset*5);
+            }
+        }
         else if (num == 1)
         {
             if (stage < 1000)
             {
-                stage++;
                 glRotatef(36*num, 0, 0, 1);
                 glTranslatef(-1, -3.078, offset*5);
                 glRotatef(-0.036*stage, 0, 0, 1);
@@ -102,7 +207,7 @@ void drawGrid(int num, int offset)
         glTranslatef(0, -3.078, offset*5);
     }
     
-    glColor3f(1, 1, 1);
+    glColor3f(1, 1, 1);         // 方块
     glBegin(GL_QUADS);
     glVertex3f(-1, 0, 0);
     glVertex3f(1, 0, 0);
@@ -110,7 +215,7 @@ void drawGrid(int num, int offset)
     glVertex3f(-1, 0, 5);
     glEnd();
     
-    glColor3f(0, 0, 0);
+    glColor3f(0, 0, 0);         // 格子
     glBegin(GL_LINES);
     glVertex3f(-1, 0, 0);
     glVertex3f(1, 0, 0);
@@ -268,6 +373,7 @@ void key(unsigned char k, int x, int y)
         }
         
         case 'm': {
+            stage = 0;
             Open = !Open;
             break;
         }
