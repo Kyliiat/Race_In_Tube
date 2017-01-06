@@ -23,8 +23,10 @@ float eye[] = { 0, 4, -6};
 float center[] = { 0, 0, 8 };
 float move_x, move_y, move_z;
 GLint number[10000];
+bool Open = false;
+int stage = 0;
 
-void drawGrid(int num, int pace, int offset)
+void drawGrid(int num, int offset)
 {
     glColor3f(1, 1, 1);
     glBegin(GL_LINES);
@@ -42,8 +44,63 @@ void drawGrid(int num, int pace, int offset)
     glEnd();
     
     glPushMatrix();
-    glRotatef(36*num, 0, 0, 1);
-    glTranslatef(0, -3.078, offset*5);
+    // decide where the grid is
+    if (Open == true)       // open the tube
+    {
+        if (num == 9)
+        {
+            if (stage < 1000)
+            {
+                stage++;
+                glRotatef(36*num, 0, 0, 1);         // 绕中轴转
+                glTranslatef(1, -3.078, offset*5);
+                glRotatef(0.036*stage, 0, 0, 1);    // 绕自己轴转
+                glTranslatef(-1, 0, 0);
+            }
+            else
+            {
+                glTranslatef(-2, -3.078, offset*5);
+            }
+            
+        }
+        else if (num == 8)
+        {
+            if (stage < 1000)
+            {
+                stage++;
+            }
+            else
+            {
+                glTranslatef(-4, -3.078, offset*5);
+            }
+        }
+        else if (num == 1)
+        {
+            if (stage < 1000)
+            {
+                stage++;
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(-1, -3.078, offset*5);
+                glRotatef(-0.036*stage, 0, 0, 1);
+                glTranslatef(1, 0, 0);
+            }
+            else
+            {
+                glTranslatef(2, -3.078, offset*5);
+            }
+        }
+        else
+        {
+            glRotatef(36*num, 0, 0, 1);
+            glTranslatef(0, -3.078, offset*5);
+        }
+        
+    }
+    else
+    {
+        glRotatef(36*num, 0, 0, 1);
+        glTranslatef(0, -3.078, offset*5);
+    }
     
     glColor3f(1, 1, 1);
     glBegin(GL_QUADS);
@@ -209,7 +266,11 @@ void key(unsigned char k, int x, int y)
             
             break;
         }
-            
+        
+        case 'm': {
+            Open = !Open;
+            break;
+        }
             
             
     }
@@ -244,7 +305,7 @@ void redraw()
     {
         for (i=0;i<10;i++)
         {
-            drawGrid(i, 0, q);
+            drawGrid(i, q);
         }
     }
     
