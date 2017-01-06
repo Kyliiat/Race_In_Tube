@@ -22,7 +22,10 @@ float eye[] = { 0, 4, -6};
 float center[] = { 0, 0, 8 };
 float move_x, move_y, move_z;
 GLint number[10000];
-bool Open = false;
+bool Open = false;      // 从上面展开
+bool OutClose = false;  // 闭合，结束状态在管道外面
+bool OutOpen = false;   // 从下面展开，然后平移
+bool InClose = false;   // 闭合，结束状态在管道内部
 int stage = 0;
 int flag = 0;
 
@@ -47,6 +50,7 @@ void drawGrid(int num, int offset)
     // decide where the grid is
     if (Open == true)       // open the tube
     {
+        if (OutClose == true) Open = false;     // 下一个状态：管道闭合
         if (flag > 7) stage++;          // adjust the speed
         if (flag <= 7) flag++;
         else flag = 0;
@@ -201,6 +205,172 @@ void drawGrid(int num, int offset)
         }
         
     }
+    else if (OutClose == true)      // 结束状态是在管道外走
+    {
+        if (OutOpen == true) OutClose = false;  // 下一个状态是从下面展开
+        if (flag > 7) stage--;          // adjust the speed
+        if (flag <= 7) flag++;
+        else flag = 0;
+        
+        double DeltaX82 = 2*(cos(((36-(0.036*stage))/180)*PI)-cos((36.0/180)*PI));
+        double DeltaY82 = 2*(sin((36.0/180)*PI)-sin(((36-(0.036*stage))/180)*PI));
+        double DeltaX73 = 2*(cos(((72-(0.072*stage))/180)*PI)-cos((72.0/180)*PI));
+        double DeltaY73 = 2*(sin((72.0/180)*PI)-sin(((72-(0.072*stage))/180)*PI));
+        double DeltaX64 = 2*(cos(((108-(0.108*stage))/180)*PI)-cos((108.0/180)*PI));
+        double DeltaY64 = 2*(sin((108.0/180)*PI)-sin(((108-(0.108*stage))/180)*PI));
+        double DeltaX55 = 2*(cos(((144-(0.144*stage))/180)*PI)-cos((144.0/180)*PI));
+        double DeltaY55 = 2*(sin((144.0/180)*PI)-sin(((144-(0.144*stage))/180)*PI));
+        
+        if (num == 9)
+        {
+            if (stage > 0)
+            {
+                glRotatef(36*num, 0, 0, 1);         // 绕z轴转
+                glTranslatef(1, -3.078, offset*5);
+                glRotatef(0.036*stage, 0, 0, 1);    // 绕自己轴转
+                glTranslatef(-1, 0, 0);
+            }
+            else
+            {
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(0, -3.078, offset*5);
+            }
+            
+        }
+        else if (num == 8)
+        {
+            if (stage > 0)
+            {
+                glTranslatef(-DeltaX82, -DeltaY82, 0);      // 微平移来进行衔接
+                glRotatef(36*num, 0, 0, 1);             // 绕z轴旋转
+                glTranslatef(1, -3.078, offset*5);      // 平移
+                glRotatef(0.072*stage, 0, 0, 1);        // 绕自己轴转
+                glTranslatef(-1, 0, 0);      // 平移
+            }
+            else
+            {
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(0, -3.078, offset*5);
+            }
+        }
+        else if (num == 7)
+        {
+            if (stage > 0)
+            {
+                glTranslatef(-DeltaX82-DeltaX73, -DeltaY82-DeltaY73, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(1, -3.078, offset*5);
+                glRotatef(0.108*stage, 0, 0, 1);
+                glTranslatef(-1, 0, 0);
+            }
+            else
+            {
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(0, -3.078, offset*5);
+            }
+        }
+        else if (num == 6)
+        {
+            if (stage > 0)
+            {
+                glTranslatef(-DeltaX82-DeltaX73-DeltaX64, -DeltaY82-DeltaY73-DeltaY64, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(1, -3.078, offset*5);
+                glRotatef(0.144*stage, 0, 0, 1);
+                glTranslatef(-1, 0, 0);
+            }
+            else
+            {
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(0, -3.078, offset*5);
+            }
+        }
+        else if (num == 5)      // put 5 on the left part (with 4,3,2,1)
+        {
+            if (stage > 0)
+            {
+                glTranslatef(DeltaX82+DeltaX73+DeltaX64+DeltaX55, -DeltaY82-DeltaY73-DeltaY64-DeltaY55, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(-1, -3.078, offset*5);
+                glRotatef(-0.180*stage, 0, 0, 1);
+                glTranslatef(1, 0, 0);
+            }
+            else
+            {
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(0, -3.078, offset*5);
+            }
+        }
+        else if (num == 4)
+        {
+            if (stage > 0)
+            {
+                glTranslatef(DeltaX82+DeltaX73+DeltaX64, -DeltaY82-DeltaY73-DeltaY64, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(-1, -3.078, offset*5);
+                glRotatef(-0.144*stage, 0, 0, 1);
+                glTranslatef(1, 0, 0);
+            }
+            else
+            {
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(0, -3.078, offset*5);
+            }
+        }
+        else if (num == 3)
+        {
+            if (stage > 0)
+            {
+                glTranslatef(DeltaX82+DeltaX73, -DeltaY82-DeltaY73, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(-1, -3.078, offset*5);
+                glRotatef(-0.108*stage, 0, 0, 1);
+                glTranslatef(1, 0, 0);
+            }
+            else
+            {
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(0, -3.078, offset*5);
+            }
+        }
+        else if (num == 2)
+        {
+            if (stage > 0)
+            {
+                glTranslatef(DeltaX82, -DeltaY82, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(-1, -3.078, offset*5);      // 平移
+                glRotatef(-0.072*stage, 0, 0, 1);        // 绕自己轴转
+                glTranslatef(1, 0, 0);      // 平移
+            }
+            else
+            {
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(0, -3.078, offset*5);
+            }
+        }
+        else if (num == 1)
+        {
+            if (stage > 0)
+            {
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(-1, -3.078, offset*5);
+                glRotatef(-0.036*stage, 0, 0, 1);
+                glTranslatef(1, 0, 0);
+            }
+            else
+            {
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(0, -3.078, offset*5);
+            }
+        }
+        else
+        {
+            glRotatef(36*num, 0, 0, 1);
+            glTranslatef(0, -3.078, offset*5);
+        }
+
+    }
     else
     {
         glRotatef(36*num, 0, 0, 1);
@@ -294,14 +464,14 @@ void updateView(int width, int height)
     
     float whRatio = (GLfloat)width / (GLfloat)height;
     if (bPersp) {
-        gluPerspective(90.0f, whRatio, 0.1f, 100.0f);
+        gluPerspective(90.0f, whRatio, 0.1f, 1000.0f);
         //glFrustum(-3, 3, -3, 3, 3,100);
     }
     else {
-        glOrtho(-3, 3, -3, 3, -100, 100);
+        glOrtho(-10*whRatio, 10*whRatio, -10, 10, -100, 100);
     }
     
-    glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
+    glMatrixMode(GL_MODELVIEW);     // Select The Modelview Matrix
 }
 
 void reshape(int width, int height)
@@ -374,7 +544,26 @@ void key(unsigned char k, int x, int y)
         
         case 'm': {
             stage = 0;
-            Open = !Open;
+            flag = 0;
+            Open = true;
+            break;
+        }
+        case 'n': {
+            stage = 1000;
+            flag = 0;
+            OutClose = true;
+            break;
+        }
+        case 'b': {
+            stage = 0;
+            flag = 0;
+            OutOpen = true;
+            break;
+        }
+        case 'v': {
+            stage = 1000;
+            flag = 0;
+            InClose = true;
             break;
         }
             
@@ -396,12 +585,9 @@ void redraw()
               center[0], center[1], center[2],
               0, 1, 0);
     
-    if (bWire) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    }
-    else {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
+  
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    
     
     glRotatef(fRotate, 0, 0, 1.0f);
 
@@ -475,7 +661,7 @@ int main(int argc, char *argv[])
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-    glutInitWindowSize(1700, 800);
+    glutInitWindowSize(1280, 697);
     int windowHandle = glutCreateWindow("Tube");
     
     glutDisplayFunc(redraw);
