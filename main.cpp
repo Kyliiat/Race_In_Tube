@@ -28,6 +28,7 @@ bool OutOpen = false;   // 从下面展开，然后平移
 bool InClose = false;   // 闭合，结束状态在管道内部
 int stage = 0;
 int flag = 0;
+double positionY = 3.078;
 
 void drawGrid(int num, int offset)
 {
@@ -371,6 +372,168 @@ void drawGrid(int num, int offset)
         }
 
     }
+    else if (OutOpen == true)       // open from the bottom
+    {
+        if (flag > 7) stage++;          // adjust the speed
+        if (flag <= 7) flag++;
+        else flag = 0;
+        
+        if (stage >= 1000)
+            if (flag > 7)
+                if (positionY > -3.078) positionY -= 0.003;
+        
+        double DeltaX73 = 2*(cos(((36-(0.036*stage))/180)*PI)-cos((36.0/180)*PI));
+        double DeltaY73 = 2*(sin((36.0/180)*PI)-sin(((36-(0.036*stage))/180)*PI));
+        double DeltaX82 = 2*(cos(((72-(0.072*stage))/180)*PI)-cos((72.0/180)*PI));
+        double DeltaY82 = 2*(sin((72.0/180)*PI)-sin(((72-(0.072*stage))/180)*PI));
+        double DeltaX91 = 2*(cos(((108-(0.108*stage))/180)*PI)-cos((108.0/180)*PI));
+        double DeltaY91 = 2*(sin((108.0/180)*PI)-sin(((108-(0.108*stage))/180)*PI));
+        double DeltaX00 = 2*(cos(((144-(0.144*stage))/180)*PI)-cos((144.0/180)*PI));
+        double DeltaY00 = 2*(sin((144.0/180)*PI)-sin(((144-(0.144*stage))/180)*PI));
+        
+        if (num == 4)
+        {
+            if (stage < 1000)
+            {
+                glRotatef(36*num, 0, 0, 1);         // 绕z轴转
+                glTranslatef(1, -3.078, offset*5);
+                glRotatef(0.036*stage, 0, 0, 1);    // 绕自己轴转
+                glTranslatef(-1, 0, 0);
+            }
+            else
+            {
+                glTranslatef(2, positionY, offset*5);
+            }
+            
+        }
+        else if (num == 6)
+        {
+            if (stage < 1000)
+            {
+                glRotatef(36*num, 0, 0, 1);         // 绕z轴转
+                glTranslatef(-1, -3.078, offset*5);
+                glRotatef(-0.036*stage, 0, 0, 1);    // 绕自己轴转
+                glTranslatef(1, 0, 0);
+            }
+            else
+            {
+                glTranslatef(-2, positionY, offset*5);
+            }
+        }
+        else if (num == 3)
+        {
+            if (stage < 1000)
+            {
+                glTranslatef(DeltaX73, DeltaY73, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(1, -3.078, offset*5);      // 平移
+                glRotatef(0.072*stage, 0, 0, 1);        // 绕自己轴转
+                glTranslatef(-1, 0, 0);      // 平移
+            }
+            else
+            {
+                glTranslatef(4, positionY, offset*5);
+            }
+        }
+        else if (num == 7)
+        {
+            if (stage < 1000)
+            {
+                glTranslatef(-DeltaX73, DeltaY73, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(-1, -3.078, offset*5);      // 平移
+                glRotatef(-0.072*stage, 0, 0, 1);        // 绕自己轴转
+                glTranslatef(1, 0, 0);      // 平移
+            }
+            else
+            {
+                glTranslatef(-4, positionY, offset*5);
+            }
+        }
+        else if (num == 2)
+        {
+            if (stage < 1000)
+            {
+                glTranslatef(DeltaX73+DeltaX82, DeltaY73+DeltaY82, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(1, -3.078, offset*5);      // 平移
+                glRotatef(0.108*stage, 0, 0, 1);        // 绕自己轴转
+                glTranslatef(-1, 0, 0);      // 平移
+            }
+            else
+            {
+                glTranslatef(6, positionY, offset*5);
+            }
+        }
+        else if (num == 8)
+        {
+            if (stage < 1000)
+            {
+                glTranslatef(-DeltaX73-DeltaX82, DeltaY73+DeltaY82, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(-1, -3.078, offset*5);      // 平移
+                glRotatef(-0.108*stage, 0, 0, 1);        // 绕自己轴转
+                glTranslatef(1, 0, 0);      // 平移
+            }
+            else
+            {
+                glTranslatef(-6, positionY, offset*5);
+            }
+        }
+        else if (num == 1)
+        {
+            if (stage < 1000)
+            {
+                glTranslatef(DeltaX73+DeltaX82+DeltaX91, DeltaY73+DeltaY82+DeltaY91, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(1, -3.078, offset*5);      // 平移
+                glRotatef(0.144*stage, 0, 0, 1);        // 绕自己轴转
+                glTranslatef(-1, 0, 0);      // 平移
+            }
+            else
+            {
+                glTranslatef(8, positionY, offset*5);
+            }
+        }
+        else if (num == 9)
+        {
+            if (stage < 1000)
+            {
+                glTranslatef(-DeltaX73-DeltaX82-DeltaX91, DeltaY73+DeltaY82+DeltaY91, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(-1, -3.078, offset*5);      // 平移
+                glRotatef(-0.144*stage, 0, 0, 1);        // 绕自己轴转
+                glTranslatef(1, 0, 0);      // 平移
+            }
+            else
+            {
+                glTranslatef(-8, positionY, offset*5);
+            }
+        }
+        else if (num == 0)      // with 1,2,3,4
+        {
+            if (stage < 1000)
+            {
+                glTranslatef(DeltaX73+DeltaX82+DeltaX91+DeltaX00, DeltaY73+DeltaY82+DeltaY91+DeltaY00, 0);
+                glRotatef(36*num, 0, 0, 1);
+                glTranslatef(1, -3.078, offset*5);      // 平移
+                glRotatef(0.180*stage, 0, 0, 1);        // 绕自己轴转
+                glTranslatef(-1, 0, 0);      // 平移
+            }
+            else
+            {
+                glTranslatef(10, positionY, offset*5);
+            }
+        }
+        else
+        {
+            glRotatef(36*num, 0, 0, 1);
+            glTranslatef(0, -positionY, offset*5);
+        }
+        
+        
+        
+    }
     else
     {
         glRotatef(36*num, 0, 0, 1);
@@ -558,6 +721,7 @@ void key(unsigned char k, int x, int y)
             stage = 0;
             flag = 0;
             OutOpen = true;
+            positionY = 3.078;
             break;
         }
         case 'v': {
