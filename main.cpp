@@ -10,16 +10,16 @@ float fTranslate;
 float fRotate=0;
 float fScale = 1.0f;	// set inital scale value to 1.0f
 
-bool bPersp = true;
+//bool bPersp = true;
 bool bAnim = false;
 bool bWire = false;
 bool run=false;
 int wHeight = 0;
 int wWidth = 0;
-GLint num =10;
+GLint num = 10;
 
-float eye[] = { 0, 0, 0};
-float center[] = { 0, 0, 10 };
+float eye[] = { 0, 0.5, -2};
+float center[] = { 0, -4, 10 };
 float move_x, move_y, move_z;
 GLint number[10000];
 bool Open = false;      // 从上面展开
@@ -34,7 +34,9 @@ double positionY = 3.078;
 int change = 0;     // when [time] have a change
 int changeTime = 1000;
 
-void drawGrid(int num, int offset)
+void drawBarrier();
+void drawCoin();
+void drawGrid(int num, int offset, bool barrier, bool coin)
 {
     glColor3f(1, 1, 1);
     glBegin(GL_LINES);
@@ -53,9 +55,10 @@ void drawGrid(int num, int offset)
     
     glPushMatrix();
     // decide where the grid is
+
     if (Open == true)       // open the tube
     {
-//        if (OutClose == true) Open = false;     // 下一个状态：管道闭合
+        //        if (OutClose == true) Open = false;     // 下一个状态：管道闭合
 //        if (flag > 4*num) stage++;          // adjust the speed
 //        if (flag <= 4*num) flag++;
 //        else flag = 0;
@@ -212,7 +215,7 @@ void drawGrid(int num, int offset)
     }
     else if (OutClose == true)      // 结束状态是在管道外走
     {
-//        if (OutOpen == true) OutClose = false;  // 下一个状态是从下面展开
+        //        if (OutOpen == true) OutClose = false;  // 下一个状态是从下面展开
 //        if (flag > 4*num) stage--;          // adjust the speed
 //        if (flag <= 4*num) flag++;
 //        else flag = 0;
@@ -374,7 +377,7 @@ void drawGrid(int num, int offset)
             glRotatef(36*num, 0, 0, 1);
             glTranslatef(0, -3.078, offset*5);
         }
-
+        
     }
     else if (OutOpen == true)       // open from the bottom
     {
@@ -534,16 +537,16 @@ void drawGrid(int num, int offset)
             glRotatef(36*num, 0, 0, 1);
             glTranslatef(0, -positionY, offset*5);
         }
-        
-        
-        
+ 
     }
+
     else
     {
         glRotatef(36*num, 0, 0, 1);
         glTranslatef(0, -3.078, offset*5);
     }
     
+/*
     glColor3f(1, 1, 1);         // 方块
     glBegin(GL_QUADS);
     glVertex3f(-1, 0, 0);
@@ -551,6 +554,13 @@ void drawGrid(int num, int offset)
     glVertex3f(1, 0, 5);
     glVertex3f(-1, 0, 5);
     glEnd();
+*/
+    glPushMatrix();
+    glColor3f(1, 1, 1);
+    glTranslatef(0, -0.1, -2.5);
+    glScalef(2, 0.2, 5);
+    glutWireCube(1);
+    glPopMatrix();
     
     glColor3f(0, 0, 0);         // 格子
     glBegin(GL_LINES);
@@ -564,59 +574,49 @@ void drawGrid(int num, int offset)
     glVertex3f(-1, 0, 0);
     glEnd();
     
+    if(barrier)
+        drawBarrier();
+ 
+    if(coin)
+        drawCoin();
     glPopMatrix();
 }
 
-void Draw_barrier(int i)
+void drawBarrier()
 {
     glColor3f(1, 0, 1);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    
     
     glPushMatrix();
-    
-    glRotatef(36*number[i], 0, 0, 1);       // rotate to a random angle
-    glTranslatef(3, -8, 25);
-    glTranslatef(move_x, move_y, move_z);
-    glRotatef(0, 1, 0, 0);
-    glRotatef(10, 0, 0, 1);
-    glRotatef(-20, 0, 1, 0);
-    
 
-    glBegin(GL_TRIANGLES);
+    glTranslatef(0, 0.5, 2.5);
+    glScalef(1.5, 1, 4);
+    glutWireCube(1);
     
-    glVertex3f(0, 2.5, 0);
-    glVertex3f(-1.5, 0, 1.5);
-    glVertex3f(1.5, 0, 1.5);
+    glPopMatrix();
+}
+
+void drawCoin()
+{
+    GLUquadric* quad, *top, *bottom;
+    quad = gluNewQuadric();
+    top = gluNewQuadric();
+    bottom = gluNewQuadric();
     
-    glVertex3f(0, 2.5, 0);
-    glVertex3f(-1.5, 0, 1.5);
-    glVertex3f(-1.5, 0, -1.5);
+    glColor3f(0.8f, 0.5f, 0.2f);
+    glPushMatrix();
     
-    glVertex3f(0, 2.5, 0);
-    glVertex3f(-1.5, 0, -1.5);
-    glVertex3f(1.5, 0, -1.5);
+    glTranslatef(0, 0.5, 2.5);
+    gluCylinder(quad, 0.5, 0.5, 0.1, 20, 20);
     
-    glVertex3f(0, 2.5, 0);
-    glVertex3f(1.5, 0, -1.5);
-    glVertex3f(1.5, 0, 1.5);
+    glPushMatrix();
+    glTranslatef(0, 0.05, 0);
+    gluDisk(bottom, 0, 0.5, 20, 1);
+    glPopMatrix();
     
-    glVertex3f(0, -2.5, 0);
-    glVertex3f(-1.5, 0, 1.5);
-    glVertex3f(1.5, 0, 1.5);
-    
-    glVertex3f(0, -2.5, 0);
-    glVertex3f(-1.5, 0, 1.5);
-    glVertex3f(-1.5, 0, -1.5);
-    
-    glVertex3f(0, -2.5, 0);
-    glVertex3f(-1.5, 0, -1.5);
-    glVertex3f(1.5, 0, -1.5);
-    
-    glVertex3f(0, -2.5, 0);
-    glVertex3f(1.5, 0, -1.5);
-    glVertex3f(1.5, 0, 1.5);
-    glEnd();
+    glPushMatrix();
+    glTranslatef(0, -0.05, 0);
+    gluDisk(top, 0, 0.5, 20, 1);
+    glPopMatrix();
     
     glPopMatrix();
 }
@@ -630,13 +630,13 @@ void updateView(int width, int height)
     glLoadIdentity();									// Reset The Projection Matrix
     
     float whRatio = (GLfloat)width / (GLfloat)height;
-    if (bPersp) {
+//    if (bPersp) {
         gluPerspective(90.0f, whRatio, 0.1f, 1000.0f);
         //glFrustum(-3, 3, -3, 3, 3,100);
-    }
-    else {
-        glOrtho(-10*whRatio, 10*whRatio, -10, 10, -100, 100);
-    }
+//    }
+//    else {
+//        glOrtho(-10*whRatio, 10*whRatio, -10, 10, -100, 100);
+//    }
     
     glMatrixMode(GL_MODELVIEW);     // Select The Modelview Matrix
 }
@@ -668,7 +668,7 @@ void key(unsigned char k, int x, int y)
     {
         case 27:
         case 'q': {exit(0); break; }
-        case 'p': {bPersp = !bPersp; break; }
+//        case 'p': {bPersp = !bPersp; break; }
             
         case ' ': {bAnim = !bAnim; break; }
         case 'o': {bWire = !bWire; break; }
@@ -681,6 +681,7 @@ void key(unsigned char k, int x, int y)
             fRotate+=36;
             break;
         }
+/*
         case 'w': {
             eye[1] -= 0.2f;
             center[1] -= 0.2f;
@@ -691,6 +692,7 @@ void key(unsigned char k, int x, int y)
             center[1] += 0.2f;
             break;
         }
+*/
         case 'z': {
             eye[2] -= 0.2f;
             center[2] -= 0.2f;
@@ -708,7 +710,7 @@ void key(unsigned char k, int x, int y)
             
             break;
         }
-        
+/*
         case 'm': {
             stage = 0;
             flag = 0;
@@ -734,17 +736,23 @@ void key(unsigned char k, int x, int y)
             positionY = 3.078;
             break;
         }
-         
+*/
             
     }
     
     updateView(wWidth, wHeight);
 }
 
+#define MAXNUM 5000
+int barrierChance[MAXNUM];
+int coinChance[MAXNUM];
+bool isBarrier = false;
+bool isCoin = false;
 
 void redraw()
 {
     int i;
+    srand((unsigned int)time(0));
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();									// Reset The Current Modelview Matrix
@@ -753,17 +761,17 @@ void redraw()
               center[0], center[1], center[2],
               0, 1, 0);
     
-  
+    
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
     
     glRotatef(fRotate, 0, 0, 1.0f);
-
-//    glScalef(0.2, 0.2, 0.2);
+    
+    //    glScalef(0.2, 0.2, 0.2);
     
     flag2 += 1;
     if (flag2 > 30) flag2 = 0;
-                                                                                                                            
+
     for (int q=0;q<num;q++)         // number of cylinders
     {
         if (Open && flag == 1) stage++;
@@ -772,12 +780,41 @@ void redraw()
         flag++;
         if (flag > 10) flag = 0;
         
+        if(barrierChance[q] == 0)
+        {
+            barrierChance[q] = (rand() % (10 - 1 + 1)) + 1;
+        }
+        if(coinChance[q]==0)
+        {
+            if(q == 0 || (q != 0 && coinChance[q -1] == barrierChance[q]))
+            {
+                coinChance[q] = (rand() % (10 - 1 + 1)) + 1;
+                if(coinChance[q] == barrierChance[q])
+                {
+                    coinChance[q] += 1;
+                    if(coinChance[q] == 11)
+                        coinChance[q] = 1;
+                }
+            }
+            else
+                coinChance[q] = coinChance[q - 1];
+        }
         for (i=0;i<10;i++)
         {
-            drawGrid(i, q);
+            if(i + 1 == barrierChance[q])
+            {
+                isBarrier = true;
+            }
+            if(i + 1 == coinChance[q])
+            {
+                isCoin = true;
+            }
+            drawGrid(i, q, isBarrier, isCoin);
+            isBarrier = false;
+            isCoin = false;
         }
     }
-    
+
     // change mode
     if (run)
     {
@@ -785,7 +822,7 @@ void redraw()
         if (change == changeTime)
         {
             change = 0;
-            srand((unsigned int)time(0));
+            //srand((unsigned int)time(0));
             changeTime = random() % 500 + 500;
             
             // change
@@ -839,56 +876,55 @@ void redraw()
         }
     }
     
-    
-//    GLUquadricObj *qobj;
-//    GLUquadricObj *qobj2;
-//    qobj = gluNewQuadric();
-//    qobj2 = gluNewQuadric();
-//    
-//    GLfloat line[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-//    GLfloat clear[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-//    glPushMatrix();
-//    
-//    //gluQuadricDrawStyle(qobj, GLU_LINE); /* flat shaded */
-//    //gluQuadricNormals(qobj, GLU_FLAT);
-//    glColor3f(1,1,1);
-//    gluQuadricDrawStyle(qobj, GLU_FILL); // all polygons wireframe
-//    gluCylinder(qobj, 10, 10, 10*num, 10,num);
-//    
-//    glPopMatrix();
-//    
-//    
-//    glColor3f(0,0,0);
-//    gluQuadricDrawStyle(qobj2, GLU_LINE);
-//    
-//    
-//    gluCylinder(qobj2, 10, 10,10*num, 10,num);
-//
-//    // barriers
-//    for (int i=0;i<num/2;i++)
-//    {
-//        if (number[0] == 0)         // set random positions
-//        {
-//            srand((int)time(0));
-//            for (int j=0;j<num/2;j++) number[j] = rand() % 10 + 1;
-//        }
-//        move_x = 0;
-//        move_y = 0;
-//        move_z = i*10;      // position in z axis
-//        Draw_barrier(i);
-//    }
-//
+    //    GLUquadricObj *qobj;
+    //    GLUquadricObj *qobj2;
+    //    qobj = gluNewQuadric();
+    //    qobj2 = gluNewQuadric();
+    //
+    //    GLfloat line[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    //    GLfloat clear[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    //    glPushMatrix();
+    //
+    //    //gluQuadricDrawStyle(qobj, GLU_LINE); /* flat shaded */
+    //    //gluQuadricNormals(qobj, GLU_FLAT);
+    //    glColor3f(1,1,1);
+    //    gluQuadricDrawStyle(qobj, GLU_FILL); // all polygons wireframe
+    //    gluCylinder(qobj, 10, 10, 10*num, 10,num);
+    //
+    //    glPopMatrix();
+    //
+    //
+    //    glColor3f(0,0,0);
+    //    gluQuadricDrawStyle(qobj2, GLU_LINE);
+    //
+    //
+    //    gluCylinder(qobj2, 10, 10,10*num, 10,num);
+    //
+    //    // barriers
+    //    for (int i=0;i<num/2;i++)
+    //    {
+    //        if (number[0] == 0)         // set random positions
+    //        {
+    //            srand((int)time(0));
+    //            for (int j=0;j<num/2;j++) number[j] = rand() % 10 + 1;
+    //        }
+    //        move_x = 0;
+    //        move_y = 0;
+    //        move_z = i*10;      // position in z axis
+    //        Draw_barrier(i);
+    //    }
+    //
     
     if (run) {
         if (flag2 == 10) num=num+1;
         eye[2] += 0.1f;
         center[2] += 0.1f;
-//        if (number[num/2] == 0)
-//        {
-//            number[num/2] = rand() % 10 + 1;
-//        }
+        //        if (number[num/2] == 0)
+        //        {
+        //            number[num/2] = rand() % 10 + 1;
+        //        }
     }
-//
+    //
     
     
     if (bAnim) fRotate += 0.1f;
