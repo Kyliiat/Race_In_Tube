@@ -651,7 +651,7 @@ void reshape(int width, int height)
     wHeight = height;
     wWidth = width;
     
-    updateView(wHeight, wWidth);
+    updateView(wWidth, wHeight);
 }
 
 void idle()
@@ -738,7 +738,7 @@ void key(unsigned char k, int x, int y)
             
     }
     
-    updateView(wHeight, wWidth);
+    updateView(wWidth, wHeight);
 }
 
 
@@ -762,7 +762,7 @@ void redraw()
 //    glScalef(0.2, 0.2, 0.2);
     
     flag2 += 1;
-    if (flag2 > 50) flag2 = 0;
+    if (flag2 > 30) flag2 = 0;
     
     for (int q=0;q<num;q++)         // number of cylinders
     {
