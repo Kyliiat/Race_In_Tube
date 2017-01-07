@@ -18,7 +18,7 @@ int wHeight = 0;
 int wWidth = 0;
 GLint num =10;
 
-float eye[] = { 0, 6, -2};
+float eye[] = { 0, 0, 0};
 float center[] = { 0, 0, 10 };
 float move_x, move_y, move_z;
 GLint number[10000];
@@ -56,9 +56,9 @@ void drawGrid(int num, int offset)
     if (Open == true)       // open the tube
     {
 //        if (OutClose == true) Open = false;     // 下一个状态：管道闭合
-        if (flag > 4*num) stage++;          // adjust the speed
-        if (flag <= 4*num) flag++;
-        else flag = 0;
+//        if (flag > 4*num) stage++;          // adjust the speed
+//        if (flag <= 4*num) flag++;
+//        else flag = 0;
         
         double DeltaX82 = 2*(cos(((36-(0.036*stage))/180)*PI)-cos((36.0/180)*PI));
         double DeltaY82 = 2*(sin((36.0/180)*PI)-sin(((36-(0.036*stage))/180)*PI));
@@ -213,9 +213,9 @@ void drawGrid(int num, int offset)
     else if (OutClose == true)      // 结束状态是在管道外走
     {
 //        if (OutOpen == true) OutClose = false;  // 下一个状态是从下面展开
-        if (flag > 4*num) stage--;          // adjust the speed
-        if (flag <= 4*num) flag++;
-        else flag = 0;
+//        if (flag > 4*num) stage--;          // adjust the speed
+//        if (flag <= 4*num) flag++;
+//        else flag = 0;
         
         double DeltaX82 = 2*(cos(((36-(0.036*stage))/180)*PI)-cos((36.0/180)*PI));
         double DeltaY82 = 2*(sin((36.0/180)*PI)-sin(((36-(0.036*stage))/180)*PI));
@@ -378,13 +378,13 @@ void drawGrid(int num, int offset)
     }
     else if (OutOpen == true)       // open from the bottom
     {
-        if (flag > 4*num) stage++;          // adjust the speed
-        if (flag <= 4*num) flag++;
-        else flag = 0;
+//        if (flag > 4*num) stage++;          // adjust the speed
+//        if (flag <= 4*num) flag++;
+//        else flag = 0;
         
         if (stage >= 1000)
-            if (flag > 7)
-                if (positionY > -3.078) positionY -= 0.003;
+            if (flag == 7)
+                if (positionY > -3.078) positionY -= 0.0005;
         
         double DeltaX73 = 2*(cos(((36-(0.036*stage))/180)*PI)-cos((36.0/180)*PI));
         double DeltaY73 = 2*(sin((36.0/180)*PI)-sin(((36-(0.036*stage))/180)*PI));
@@ -763,9 +763,15 @@ void redraw()
     
     flag2 += 1;
     if (flag2 > 30) flag2 = 0;
-    
+                                                                                                                            
     for (int q=0;q<num;q++)         // number of cylinders
     {
+        if (Open && flag == 1) stage++;
+        else if (OutClose && flag == 1) stage--;
+        else if (OutOpen && flag == 1) stage++;
+        flag++;
+        if (flag > 10) flag = 0;
+        
         for (i=0;i<10;i++)
         {
             drawGrid(i, q);
