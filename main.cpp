@@ -1,4 +1,4 @@
-#include <glut/glut.h>
+﻿#include <glut.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -14,6 +14,7 @@ float fScale = 1.0f;	// set inital scale value to 1.0f
 bool bAnim = false;
 bool bWire = false;
 bool run=false;
+bool IsOpen=false;
 int wHeight = 0;
 int wWidth = 0;
 GLint num = 10;
@@ -673,12 +674,25 @@ void key(unsigned char k, int x, int y)
         case ' ': {bAnim = !bAnim; break; }
         case 'o': {bWire = !bWire; break; }
             
-        case 'a': {
-            fRotate-=36;
+case 'a': {
+			if(IsOpen){
+				if(eye[0]<8.5){
+			eye[0]+=2.0f;
+			center[0]+=2.0f;
+				}
+			}else{
+				fRotate-=36;}
             break;
         }
         case 'd': {
-            fRotate+=36;
+			if(IsOpen){
+				if(eye[0]>-8)
+				{
+			eye[0]-=2.0f;
+			center[0]-=2.0f;
+				}
+			}else{
+				fRotate+=36;}
             break;
         }
 /*
@@ -757,6 +771,15 @@ void redraw()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();									// Reset The Current Modelview Matrix
     
+	if(!IsOpen)
+	{
+		eye[0]=0;
+		center[0]=0;
+	}else
+	{
+		fRotate=0.0f;
+	}
+
     gluLookAt(eye[0], eye[1], eye[2],
               center[0], center[1], center[2],
               0, 1, 0);
@@ -822,17 +845,18 @@ void redraw()
         if (change == changeTime)
         {
             change = 0;
-            //srand((unsigned int)time(0));
-            changeTime = random() % 500 + 500;
+            srand((unsigned int)time(0));
+            changeTime = rand() % 500 + 500;
             
             // change
             if (!Open && !OutOpen && !OutClose)     // 在管道里面
             {
-                if (random() % 2 == 0)
+                if (rand() % 2 == 0)
                 {
                     stage = 0;
                     flag = 0;
                     Open = true;
+					IsOpen=true;
                 }
                 else
                 {
@@ -840,7 +864,8 @@ void redraw()
                     flag = 0;
                     stage = 0;
                     OutOpen = true;
-                }
+					IsOpen=true;
+				}
             }
             else if (Open)      // 展开状态
             {
@@ -848,6 +873,7 @@ void redraw()
                 stage = 1000;
                 flag = 0;
                 OutClose = true;    // 关闭，在管道里面
+				IsOpen=false;
             }
             else if (OutOpen)   // 展开
             {
@@ -855,15 +881,19 @@ void redraw()
                 stage = 1000;
                 flag = 0;
                 OutClose = true;    // 关闭
-            }
+				IsOpen=false;
+			}
+
             else if (OutClose)
             {
                 OutClose = false;
-                if (random() % 2 == 0)
+                if (rand() % 2 == 0)
                 {
                     stage = 0;
                     flag = 0;
                     Open = true;
+					IsOpen=true;
+
                 }
                 else
                 {
@@ -871,6 +901,8 @@ void redraw()
                     flag = 0;
                     stage = 0;
                     OutOpen = true;
+					IsOpen=true;
+
                 }
             }
         }
