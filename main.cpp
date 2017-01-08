@@ -17,12 +17,11 @@ bool run=false;
 bool IsOpen=false;
 int wHeight = 0;
 int wWidth = 0;
-GLint num = 10;
+GLint num = 20;
 
 float eye[] = { 0, 0.5, -2};
 float center[] = { 0, -4, 10 };
 float move_x, move_y, move_z;
-GLint number[10000];
 bool Open = false;      // 从上面展开
 bool OutClose = false;  // 闭合，结束状态在管道外部
 bool OutOpen = false;   // 在管道外部时，从下面展开，然后平移
@@ -35,6 +34,11 @@ double positionY = 3.078;
 
 int change = 0;     // when [time] have a change
 int changeTime = 1000;
+
+// change mode signals
+bool willChange = false;
+bool doChange = false;
+int changeInterval = 0;
 
 void drawBarrier();
 void drawCoin();
@@ -58,7 +62,7 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
     glPushMatrix();
     // decide where the grid is
     
-    if (Open == true)       // open the tube
+    if (Open)       // open the tube
     {
         //        if (OutClose == true) Open = false;     // 下一个状态：管道闭合
         //        if (flag > 4*num) stage++;          // adjust the speed
@@ -215,14 +219,14 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
         }
         
     }
-    else if (OutClose == true)      // 结束状态是在管道外走
+    else if (OutClose)      // 结束状态是在管道外走
     {
         //        if (OutOpen == true) OutClose = false;  // 下一个状态是从下面展开
         //        if (flag > 4*num) stage--;          // adjust the speed
         //        if (flag <= 4*num) flag++;
         //        else flag = 0;
         
-        if (stage == -1)
+        if (stage == -1 && doChange)
         {
             if (flag == 7)
             {
@@ -431,13 +435,13 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
         }
         
     }
-    else if (OutOpen == true)       // open from the bottom
+    else if (OutOpen)       // open from the bottom
     {
         //        if (flag > 4*num) stage++;          // adjust the speed
         //        if (flag <= 4*num) flag++;
         //        else flag = 0;
         
-        if (stage >= 1000)
+        if (stage >= 1000 && doChange)
             if (flag == 7)
                 if (positionY > -3.078) positionY -= 0.0005;
         
@@ -591,7 +595,7 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
         }
         
     }
-    else if (Close == true)      // 结束状态是在管道内
+    else if (Close)      // 结束状态是在管道内
     {
         //        if (OutOpen == true) OutClose = false;  // 下一个状态是从下面展开
         //        if (flag > 4*num) stage--;          // adjust the speed
@@ -941,32 +945,32 @@ void key(unsigned char k, int x, int y)
             break;
         }
             
-             case 'm': {
-             stage = 0;
-             flag = 0;
-             OutClose = false;
-             OutOpen = false;
-             Open = true;
-             break;
-             }
-             case 'n': {
-             stage = -1;
-             flag = 0;
-                 positionY = -3.078;
-             Open = false;
-             OutOpen = false;
-             OutClose = true;
-             break;
-             }
-             case 'b': {
-             stage = 0;
-             flag = 0;
-             Open = false;
-             OutClose = false;
-             OutOpen = true;
-             positionY = 3.078;
-             break;
-             }
+        case 'm': {
+            stage = 0;
+            flag = 0;
+            OutClose = false;
+            OutOpen = false;
+            Open = true;
+            break;
+        }
+        case 'n': {
+            stage = -1;
+            flag = 0;
+            positionY = -3.078;
+            Open = false;
+            OutOpen = false;
+            OutClose = true;
+            break;
+        }
+        case 'b': {
+            stage = 0;
+            flag = 0;
+            Open = false;
+            OutClose = false;
+            OutOpen = true;
+            positionY = 3.078;
+            break;
+        }
             
             
     }
@@ -1010,16 +1014,19 @@ void redraw()
     //    glScalef(0.2, 0.2, 0.2);
     
     flag2 += 1;
-    if (flag2 > 30) flag2 = 0;
+    if (flag2 > 50) flag2 = 0;
     
-    for (int q=0;q<num;q++)         // number of cylinders
+    for (int q=num-20;q<num;q++)         // number of cylinders
     {
-        if (Open && flag == 1 && stage < 1002) stage++;             // speed control
-        else if (OutClose && flag == 1 && stage > 0) stage--;
-        else if (OutOpen && flag == 1 && stage < 1002) stage++;
-        else if (Close && flag == 1 && stage > 0) stage--;
-        flag++;
-        if (flag > 10) flag = 0;
+        if (run && doChange)
+        {
+            if (Open && flag == 1 && stage < 1002) stage+=2;             // speed control
+            else if (OutClose && flag == 1 && stage > 0) stage-=2;
+            else if (OutOpen && flag == 1 && stage < 1002) stage+=2;
+            else if (Close && flag == 1 && stage > 0) stage-=2;
+            flag++;
+            if (flag > 7) flag = 0;
+        }
         
         if(barrierChance[q] == 0)
         {
@@ -1059,16 +1066,28 @@ void redraw()
     // change mode
     if (run)
     {
+        if (willChange) changeInterval++;           // between change signal and real change
+        if (changeInterval == 200)
+        {
+            printf("dochange\n");
+            changeInterval = 0;
+            willChange = false;
+            doChange = true;
+        }
+        
         change++;
         if (change == changeTime)
         {
             change = 0;
             srand((unsigned int)time(0));
-            changeTime = rand() % 500 + 500;
+            changeTime = rand() % 500 + 800;
             
             // change
             if (!Open && !OutOpen && !OutClose)     // 在管道里面
             {
+                printf("willchange\n");
+                willChange = true;
+                doChange = false;
                 stage = 0;
                 flag = 0;
                 Open = true;
@@ -1076,12 +1095,15 @@ void redraw()
             }
             else if (Open)      // 展开状态
             {
+                printf("willchange\n");
+                willChange = true;
+                doChange = false;
                 Open = false;
                 stage = 1000;
                 flag = 0;
                 if (rand() % 2 == 0)
                 {
-                    OutClose = true;    
+                    OutClose = true;
                     IsOpen=false;
                     stage = 1000;
                     positionY = -3.078;
@@ -1098,6 +1120,9 @@ void redraw()
             }
             else if (OutClose)      // 闭合，闭合后在外面
             {
+                printf("willchange\n");
+                willChange = true;
+                doChange = false;
                 OutClose = false;
                 flag = 0;
                 stage = -1;
@@ -1106,16 +1131,22 @@ void redraw()
             }
             else if (OutOpen)   // 在外面时的展开
             {
+                printf("willchange\n");
+                willChange = true;
+                doChange = false;
                 OutOpen = false;
-                stage = -1;
+                stage = 1000;
                 flag = 0;
                 Close = true;    // 关闭
                 IsOpen=false;
             }
             else if (Close)
             {
+                printf("willchange\n");
+                willChange = true;
+                doChange = false;
                 Close = false;
-                stage = 0;
+                stage = 1000;
                 flag = 0;
                 Open = true;
                 IsOpen = true;
