@@ -89,6 +89,8 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
             }
             else
             {
+                doChange = false;
+                IsOpen = true;
                 glTranslatef(-2, -3.078, offset*5);
             }
             
@@ -258,6 +260,8 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
                 if (stage == -1) glTranslatef(2, positionY, offset*5);
                 else
                 {
+                    doChange = false;
+                    IsOpen = false;
                     glRotatef(36*num, 0, 0, 1);
                     glTranslatef(0, -positionY, offset*5);
                 }
@@ -444,6 +448,11 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
         if (stage >= 1000 && doChange)
             if (flag == 7)
                 if (positionY > -3.078) positionY -= 0.0005;
+        if (!(positionY > -3.078))
+        {
+            doChange = false;
+            IsOpen = true;
+        }
         
         double DeltaX73 = 2*(cos(((36-(0.036*stage))/180)*PI)-cos((36.0/180)*PI));
         double DeltaY73 = 2*(sin((36.0/180)*PI)-sin(((36-(0.036*stage))/180)*PI));
@@ -622,6 +631,8 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
             }
             else
             {
+                doChange = false;
+                IsOpen = false;
                 glRotatef(36*num, 0, 0, 1);
                 glTranslatef(0, -3.078, offset*5);
             }
@@ -895,16 +906,22 @@ void key(unsigned char k, int x, int y)
         case 'o': {bWire = !bWire; break; }
             
         case 'a': {
+            if (!doChange)      // no use when changing
+            {
             if(IsOpen){
                 if(eye[0]<8.5){
                     eye[0]+=2.0f;
                     center[0]+=2.0f;
                 }
             }else{
-                fRotate-=36;}
+                fRotate-=36;
+            }
+            }
             break;
         }
         case 'd': {
+            if (!doChange)
+            {
             if(IsOpen){
                 if(eye[0]>-8)
                 {
@@ -912,7 +929,9 @@ void key(unsigned char k, int x, int y)
                     center[0]-=2.0f;
                 }
             }else{
-                fRotate+=36;}
+                fRotate+=36;
+            }
+            }
             break;
         }
             /*
@@ -992,14 +1011,14 @@ void redraw()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();									// Reset The Current Modelview Matrix
     
-    if(!IsOpen)
-    {
-        eye[0]=0;
-        center[0]=0;
-    }else
-    {
-        fRotate=0.0f;
-    }
+//    if(!IsOpen)
+//    {
+//        eye[0]=0;
+//        center[0]=0;
+//    }else
+//    {
+//        fRotate=0.0f;
+//    }
     
     gluLookAt(eye[0], eye[1], eye[2],
               center[0], center[1], center[2],
@@ -1075,8 +1094,40 @@ void redraw()
             doChange = true;
         }
         
+        // change the view when change
+        if (doChange == true && !IsOpen)
+        {
+            // init range in (-360, +360)
+            if (fRotate < 0)
+            {
+                while (fRotate + 360 < 0) fRotate += 360;
+            }
+            else if (fRotate > 0)
+            {
+                while (fRotate - 360 > 0) fRotate -= 360;
+            }
+            
+            if (fRotate <= 0)
+            {
+                if (fRotate != 0) fRotate += 1;
+            }
+            else if (fRotate >= 0)
+            {
+                if (fRotate != 0) fRotate -= 1;
+            }
+            
+        }
+        else if (doChange && IsOpen)
+        {
+            if (eye[0] < 0) eye[0] += 0.1;
+            else if (eye[0] > 0) eye[0] -= 0.1;
+            
+            if (center[0] < 0) center[0] += 0.1;
+            else if (center[0] > 0) center[0] -= 0.1;
+        }
+        
         change++;
-        if (change == changeTime)
+        if (change == changeTime)       // 这个函数是设置下一个状态，即将打开还是将要闭合
         {
             change = 0;
             srand((unsigned int)time(0));
@@ -1085,17 +1136,15 @@ void redraw()
             // change
             if (!Open && !OutOpen && !OutClose)     // 在管道里面
             {
-                printf("willchange\n");
                 willChange = true;
                 doChange = false;
                 stage = 0;
                 flag = 0;
                 Open = true;
-                IsOpen=true;
+//                IsOpen=true;
             }
             else if (Open)      // 展开状态
             {
-                printf("willchange\n");
                 willChange = true;
                 doChange = false;
                 Open = false;
@@ -1104,7 +1153,7 @@ void redraw()
                 if (rand() % 2 == 0)
                 {
                     OutClose = true;
-                    IsOpen=false;
+//                    IsOpen=false;
                     stage = 1000;
                     positionY = -3.078;
                     flag = 0;
@@ -1115,41 +1164,38 @@ void redraw()
                     stage = 1000;
                     flag = 0;
                     Close = true;
-                    IsOpen = false;
+//                    IsOpen = false;
                 }
             }
             else if (OutClose)      // 闭合，闭合后在外面
             {
-                printf("willchange\n");
                 willChange = true;
                 doChange = false;
                 OutClose = false;
                 flag = 0;
                 stage = -1;
                 OutOpen = true;
-                IsOpen=true;
+//                IsOpen=true;
             }
             else if (OutOpen)   // 在外面时的展开
             {
-                printf("willchange\n");
                 willChange = true;
                 doChange = false;
                 OutOpen = false;
                 stage = 1000;
                 flag = 0;
                 Close = true;    // 关闭
-                IsOpen=false;
+//                IsOpen=false;
             }
             else if (Close)
             {
-                printf("willchange\n");
                 willChange = true;
                 doChange = false;
                 Close = false;
                 stage = 1000;
                 flag = 0;
                 Open = true;
-                IsOpen = true;
+//                IsOpen = true;
             }
             
             
