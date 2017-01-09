@@ -10,21 +10,24 @@ float fTranslate;
 float fRotate=0;
 float fScale = 1.0f;	// set inital scale value to 1.0f
 
-//bool bPersp = true;
-bool bAnim = false;
-bool bWire = false;
 bool run=false;
 bool IsOpen=false;
 int wHeight = 0;
 int wWidth = 0;
 GLint num = 20;
 
-float eye[] = { 0, 0.5, -2};
+bool runOutside = false;    //是否在外跑
+bool runTrackReformed = false;
+bool eyeMoveUp = false;
+bool eyeMoveDown = false;
+
+float eye[] = { 0, 0.5, 0};
 float center[] = { 0, -4, 10 };
 float move_x, move_y, move_z;
+GLint number[10000];
 bool Open = false;      // 从上面展开
-bool OutClose = false;  // 闭合，结束状态在管道外部
-bool OutOpen = false;   // 在管道外部时，从下面展开，然后平移
+bool OutClose = false;  // 闭合，结束状态在管道外部/内部
+bool OutOpen = false;   // 从下面展开，然后平移
 bool Close = false;     // 闭合，结束状态在管道内部
 int stage = 0;
 int flag = 0;
@@ -39,6 +42,45 @@ int changeTime = 1000;
 bool willChange = false;
 bool doChange = false;
 int changeInterval = 0;
+bool changed = false;
+
+typedef struct car{
+    GLdouble speed;
+    int cylinderID;
+    int position;
+    GLdouble coordinates[3];
+    int coinCount;
+    int HP;
+}Car;
+
+Car testCar;
+#define CONSTSPEED 0.1f
+#define INITHP 5
+
+void initCar()
+{
+    testCar.speed = CONSTSPEED;
+    testCar.cylinderID = 0;
+    testCar.position = 0;
+    testCar.coordinates[0] = 0;
+    testCar.coordinates[1] = -3.078 + 0.5;
+    testCar.coordinates[2] =2.5;
+    testCar.coinCount = 0;
+    testCar.HP = INITHP;
+}
+
+void drawCar()
+{
+    glPushMatrix();
+    
+    glColor3f(0.3, 0.2, 0.1);
+    glRotatef(-fRotate, 0, 0, 1.0f);
+    glTranslatef(testCar.coordinates[0], testCar.coordinates[1], testCar.coordinates[2]);
+    glutSolidCube(1);
+    
+    
+    glPopMatrix();
+}
 
 void drawBarrier();
 void drawCoin();
@@ -62,7 +104,7 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
     glPushMatrix();
     // decide where the grid is
     
-    if (Open)       // open the tube
+    if (Open == true)       // open the tube
     {
         //        if (OutClose == true) Open = false;     // 下一个状态：管道闭合
         //        if (flag > 4*num) stage++;          // adjust the speed
@@ -221,7 +263,7 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
         }
         
     }
-    else if (OutClose)      // 结束状态是在管道外走
+    else if (OutClose == true)      // 结束状态是在管道外走
     {
         //        if (OutOpen == true) OutClose = false;  // 下一个状态是从下面展开
         //        if (flag > 4*num) stage--;          // adjust the speed
@@ -437,9 +479,8 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
             }
             
         }
-        
     }
-    else if (OutOpen)       // open from the bottom
+    else if (OutOpen == true)       // open from the bottom
     {
         //        if (flag > 4*num) stage++;          // adjust the speed
         //        if (flag <= 4*num) flag++;
@@ -604,6 +645,7 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
         }
         
     }
+    
     else if (Close)      // 结束状态是在管道内
     {
         //        if (OutOpen == true) OutClose = false;  // 下一个状态是从下面展开
@@ -772,6 +814,7 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
         }
         
     }
+    
     else
     {
         glRotatef(36*num, 0, 0, 1);
@@ -794,23 +837,33 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
     glutWireCube(1);
     glPopMatrix();
     
-    glColor3f(0, 0, 0);         // 格子
-    glBegin(GL_LINES);
-    glVertex3f(-1, 0, 0);
-    glVertex3f(1, 0, 0);
-    glVertex3f(1, 0, 0);
-    glVertex3f(1, 0, 5);
-    glVertex3f(1, 0, 5);
-    glVertex3f(-1, 0, 5);
-    glVertex3f(-1, 0, 5);
-    glVertex3f(-1, 0, 0);
-    glEnd();
+    //    glColor3f(0, 0, 0);         // 格子
+    //    glBegin(GL_LINES);
+    //    glVertex3f(-1, 0, 0);
+    //    glVertex3f(1, 0, 0);
+    //    glVertex3f(1, 0, 0);
+    //    glVertex3f(1, 0, 5);
+    //    glVertex3f(1, 0, 5);
+    //    glVertex3f(-1, 0, 5);
+    //    glVertex3f(-1, 0, 5);
+    //    glVertex3f(-1, 0, 0);
+    //    glEnd();
     
-    if(barrier)
-        drawBarrier();
-    
-    if(coin)
-        drawCoin();
+    if(!runOutside)
+    {
+        if(barrier)
+            drawBarrier();
+        if(coin)
+            drawCoin();
+    }else{
+        glPushMatrix();
+        glTranslatef(0, -1.2, 0);
+        if(barrier)
+            drawBarrier();
+        if(coin)
+            drawCoin();
+        glPopMatrix();
+    }
     glPopMatrix();
 }
 
@@ -862,13 +915,7 @@ void updateView(int width, int height)
     glLoadIdentity();									// Reset The Projection Matrix
     
     float whRatio = (GLfloat)width / (GLfloat)height;
-    //    if (bPersp) {
     gluPerspective(90.0f, whRatio, 0.1f, 1000.0f);
-    //glFrustum(-3, 3, -3, 3, 3,100);
-    //    }
-    //    else {
-    //        glOrtho(-10*whRatio, 10*whRatio, -10, 10, -100, 100);
-    //    }
     
     glMatrixMode(GL_MODELVIEW);     // Select The Modelview Matrix
 }
@@ -900,37 +947,71 @@ void key(unsigned char k, int x, int y)
     {
         case 27:
         case 'q': {exit(0); break; }
-            //        case 'p': {bPersp = !bPersp; break; }
-            
-        case ' ': {bAnim = !bAnim; break; }
-        case 'o': {bWire = !bWire; break; }
             
         case 'a': {
             if (!doChange)      // no use when changing
             {
-            if(IsOpen){
-                if(eye[0]<8.5){
-                    eye[0]+=2.0f;
-                    center[0]+=2.0f;
+                if(!runOutside)
+                {
+                    if(IsOpen){
+                        if(eye[0]<8.5){
+                            eye[0]+=2.0f;
+                            center[0]+=2.0f;
+                            testCar.coordinates[0] += 2.0f;
+                            if(!runTrackReformed)
+                            {
+                                if(testCar.position == 9)
+                                    testCar.position = 0;
+                                else testCar.position ++;
+                            }else{
+                                testCar.position --;
+                            }
+                        }
+                    }else{
+                        fRotate-=36;
+                        testCar.position ++;
+                        if(testCar.position == 10) testCar.position = 0;
+                    }
+                }else{
+                    fRotate += 36;
+                    testCar.position --;
+                    if(testCar.position == -1) testCar.position = 9;
                 }
-            }else{
-                fRotate-=36;
-            }
+                
             }
             break;
         }
         case 'd': {
             if (!doChange)
             {
-            if(IsOpen){
-                if(eye[0]>-8)
+                if(!runOutside)
                 {
-                    eye[0]-=2.0f;
-                    center[0]-=2.0f;
+                    if(IsOpen){
+                        if(eye[0]>-8)
+                        {
+                            eye[0]-=2.0f;
+                            center[0]-=2.0f;
+                            testCar.coordinates[0] -= 2.0f;
+                            if(!runTrackReformed)
+                            {
+                                if(testCar.position == 0)
+                                    testCar.position = 9;
+                                else testCar.position --;
+                            }else{
+                                testCar.position ++;
+                            }
+                        }
+                    }else{
+                        fRotate+=36;
+                        testCar.position --;
+                        if(testCar.position == -1) testCar.position = 9;
+                    }
+                }else{
+                    fRotate -= 36;
+                    testCar.position ++;
+                    if(testCar.position == 11) testCar.position = 0;
                 }
-            }else{
-                fRotate+=36;
-            }
+                
             }
             break;
         }
@@ -964,34 +1045,6 @@ void key(unsigned char k, int x, int y)
             break;
         }
             
-        case 'm': {
-            stage = 0;
-            flag = 0;
-            OutClose = false;
-            OutOpen = false;
-            Open = true;
-            break;
-        }
-        case 'n': {
-            stage = -1;
-            flag = 0;
-            positionY = -3.078;
-            Open = false;
-            OutOpen = false;
-            OutClose = true;
-            break;
-        }
-        case 'b': {
-            stage = 0;
-            flag = 0;
-            Open = false;
-            OutClose = false;
-            OutOpen = true;
-            positionY = 3.078;
-            break;
-        }
-            
-            
     }
     
     updateView(wWidth, wHeight);
@@ -1002,6 +1055,7 @@ int barrierChance[MAXNUM];
 int coinChance[MAXNUM];
 bool isBarrier = false;
 bool isCoin = false;
+bool isCollison = false;
 
 void redraw()
 {
@@ -1010,15 +1064,6 @@ void redraw()
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();									// Reset The Current Modelview Matrix
-    
-//    if(!IsOpen)
-//    {
-//        eye[0]=0;
-//        center[0]=0;
-//    }else
-//    {
-//        fRotate=0.0f;
-//    }
     
     gluLookAt(eye[0], eye[1], eye[2],
               center[0], center[1], center[2],
@@ -1030,12 +1075,28 @@ void redraw()
     
     glRotatef(fRotate, 0, 0, 1.0f);
     
+    
+    //outOpen, outClose时视角变化
+    
+    //    if(eyeMoveUp)
+    //    {
+    //        eye[1] += 3.078 * 2;
+    //        center[1] += 3.078*2;
+    //        eyeMoveUp = false;
+    //    }
+    //    if(eyeMoveDown){
+    //        eye[1] -= 3.078 * 2;
+    //        center[1] -= 3.078*2;
+    //        eyeMoveDown = false;
+    //    }
+    
+    
     //    glScalef(0.2, 0.2, 0.2);
     
     flag2 += 1;
     if (flag2 > 50) flag2 = 0;
     
-    for (int q=num-20;q<num;q++)         // number of cylinders
+    for (int q=num-22;q<num;q++)         // number of cylinders
     {
         if (run && doChange)
         {
@@ -1045,40 +1106,61 @@ void redraw()
             else if (Close && flag == 1 && stage > 0) stage-=2;
             flag++;
             if (flag > 7) flag = 0;
+            
+            // eye[1] 0.5 + 3.078 * 2
+            // center[1] -4 + 3.078 * 2
+            if (eyeMoveUp && eye[1] < 0.5 + 3.078 * 2)
+            {
+                eye[1] += 0.012;
+                center[1] += 0.012;
+            }
+            else if (eyeMoveUp) eyeMoveUp = false;
+            
+            if (eyeMoveDown && eye[1] > 0.5)
+            {
+                eye[1] -= 0.012;
+                center[1] -= 0.012;
+            }
+            else if (eyeMoveDown) eyeMoveDown = false;
         }
         
-        if(barrierChance[q] == 0)
+        if(q > 0)
         {
-            barrierChance[q] = (rand() % (10 - 1 + 1)) + 1;
-        }
-        if(coinChance[q]==0)
-        {
-            if(q == 0 || (q != 0 && coinChance[q -1] == barrierChance[q]))
+            if(barrierChance[q] == 0)
             {
-                coinChance[q] = (rand() % (10 - 1 + 1)) + 1;
-                if(coinChance[q] == barrierChance[q])
+                barrierChance[q] = (rand() % (10 - 1 + 1)) + 1;
+            }
+            if(coinChance[q] == 0)
+            {
+                if(q == 1
+                   || (q > 1 && coinChance[q -1] == barrierChance[q])
+                   || ((coinChance[q - 1] == 0 || coinChance[q - 1] == -1) && q > 1))
                 {
-                    coinChance[q] += 1;
-                    if(coinChance[q] == 11)
-                        coinChance[q] = 1;
+                    coinChance[q] = (rand() % (10 - 1 + 1)) + 1;
+                    if(coinChance[q] == barrierChance[q])
+                    {
+                        coinChance[q] += 1;
+                        if(coinChance[q] == 11)
+                            coinChance[q] = 1;
+                    }
                 }
+                else
+                    coinChance[q] = coinChance[q - 1];
             }
-            else
-                coinChance[q] = coinChance[q - 1];
-        }
-        for (i=0;i<10;i++)
-        {
-            if(i + 1 == barrierChance[q])
+            for (i=0;i<10;i++)
             {
-                isBarrier = true;
+                if(i + 1 == barrierChance[q])
+                {
+                    isBarrier = true;
+                }
+                if(i + 1 == coinChance[q])
+                {
+                    isCoin = true;
+                }
+                drawGrid(i, q, isBarrier, isCoin);
+                isBarrier = false;
+                isCoin = false;
             }
-            if(i + 1 == coinChance[q])
-            {
-                isCoin = true;
-            }
-            drawGrid(i, q, isBarrier, isCoin);
-            isBarrier = false;
-            isCoin = false;
         }
     }
     
@@ -1086,16 +1168,105 @@ void redraw()
     if (run)
     {
         if (willChange) changeInterval++;           // between change signal and real change
-        if (changeInterval == 200)
+        if (changeInterval == 500)
         {
             printf("dochange\n");
             changeInterval = 0;
             willChange = false;
             doChange = true;
+            
+            testCar.coordinates[0] = 0;
+            
+            // change
+            if (!Open && !OutOpen && !OutClose && !Close)     // 在管道里面
+            {
+                //                doChange = false;
+                stage = 0;
+                flag = 0;
+                Open = true;
+                IsOpen=true;
+                
+                testCar.position = 0;
+                
+            }
+            else if (Open)      // 展开状态
+            {
+                //                doChange = false;
+                Open = false;
+                stage = 1000;
+                flag = 0;
+                if (rand() % 2 == 0)
+                {
+                    OutClose = true;
+                    IsOpen=false;
+                    
+                    runOutside = true;
+                    testCar.position = 5;
+                    testCar.coordinates[1] += 3.078 * 2;
+                    eyeMoveUp = true;
+                    
+                    stage = 1000;
+                    positionY = -3.078;
+                    flag = 0;
+                    stage = -1;
+                }
+                else
+                {
+                    stage = 1000;
+                    flag = 0;
+                    Close = true;
+                    IsOpen = false;
+                    
+                    testCar.position = 0;
+                    
+                }
+            }
+            else if (OutClose)      // 闭合，闭合后在外面
+            {
+                //                doChange = false;
+                OutClose = false;
+                flag = 0;
+                stage = -1;
+                OutOpen = true;
+                IsOpen=true;
+                
+                runOutside = false;
+                runTrackReformed = true;
+                testCar.position = 5;
+                testCar.coordinates[1] -= 3.078 * 2;
+                eyeMoveDown = true;
+                
+            }
+            else if (OutOpen)   // 在外面时的展开
+            {
+                //                doChange = false;
+                OutOpen = false;
+                stage = 1000;
+                flag = 0;
+                Close = true;    // 关闭
+                IsOpen=false;
+                
+                testCar.position = 0;
+                runTrackReformed = false;
+                
+            }
+            else if (Close)
+            {
+                //                doChange = false;
+                Close = false;
+                stage = 0;
+                flag = 0;
+                Open = true;
+                IsOpen = true;
+                
+                testCar.position = 0;
+                
+            }
+            
         }
         
         // change the view when change
-        if (doChange == true && !IsOpen)
+        if (doChange == true && IsOpen)
         {
             // init range in (-360, +360)
             if (fRotate < 0)
@@ -1109,15 +1280,15 @@ void redraw()
             
             if (fRotate <= 0)
             {
-                if (fRotate != 0) fRotate += 1;
+                if (fRotate != 0) fRotate += 2;
             }
             else if (fRotate >= 0)
             {
-                if (fRotate != 0) fRotate -= 1;
+                if (fRotate != 0) fRotate -= 2;
             }
             
         }
-        else if (doChange && IsOpen)
+        else if (doChange && !IsOpen)
         {
             if (eye[0] < 0) eye[0] += 0.1;
             else if (eye[0] > 0) eye[0] -= 0.1;
@@ -1130,76 +1301,23 @@ void redraw()
         if (change == changeTime)       // 这个函数是设置下一个状态，即将打开还是将要闭合
         {
             change = 0;
-            srand((unsigned int)time(0));
-            changeTime = rand() % 500 + 800;
+            //srand((unsigned int)time(0));
+            changeTime = rand() % 500 + 2000;
             
-            // change
-            if (!Open && !OutOpen && !OutClose)     // 在管道里面
-            {
-                willChange = true;
-                doChange = false;
-                stage = 0;
-                flag = 0;
-                Open = true;
-//                IsOpen=true;
-            }
-            else if (Open)      // 展开状态
-            {
-                willChange = true;
-                doChange = false;
-                Open = false;
-                stage = 1000;
-                flag = 0;
-                if (rand() % 2 == 0)
-                {
-                    OutClose = true;
-//                    IsOpen=false;
-                    stage = 1000;
-                    positionY = -3.078;
-                    flag = 0;
-                    stage = -1;
-                }
-                else
-                {
-                    stage = 1000;
-                    flag = 0;
-                    Close = true;
-//                    IsOpen = false;
-                }
-            }
-            else if (OutClose)      // 闭合，闭合后在外面
-            {
-                willChange = true;
-                doChange = false;
-                OutClose = false;
-                flag = 0;
-                stage = -1;
-                OutOpen = true;
-//                IsOpen=true;
-            }
-            else if (OutOpen)   // 在外面时的展开
-            {
-                willChange = true;
-                doChange = false;
-                OutOpen = false;
-                stage = 1000;
-                flag = 0;
-                Close = true;    // 关闭
-//                IsOpen=false;
-            }
-            else if (Close)
-            {
-                willChange = true;
-                doChange = false;
-                Close = false;
-                stage = 1000;
-                flag = 0;
-                Open = true;
-//                IsOpen = true;
-            }
-            
+            willChange = true;
+            changed = true;
             
         }
+    }
+    
+    if(changed)
+    {
+        for(i = 10; i <= 18; i++)
+        {
+            barrierChance[i + testCar.cylinderID] = -1;
+            coinChance[i + testCar.cylinderID] = -1;
+        }
+        changed = false;
     }
     
     //    GLUquadricObj *qobj;
@@ -1245,21 +1363,57 @@ void redraw()
         if (flag2 == 10) num=num+1;
         eye[2] += 0.1f;
         center[2] += 0.1f;
+        
+        testCar.coordinates[2] += 0.1f;
+        testCar.cylinderID = (int)(testCar.coordinates[2] / 5);
+        
+        if(!doChange)
+        {
+            if(isCollison == false)
+            {
+                if(barrierChance[testCar.cylinderID] - 1 == testCar.position)
+                {
+                    testCar.HP --;
+                    isCollison = true;
+                    if(testCar.HP == 0)
+                    {
+                        //GAME OVER
+                    }
+                }else{
+                    if(!doChange)
+                        drawCar();
+                }
+            }else{
+                if(barrierChance[testCar.cylinderID] - 1 != testCar.position) isCollison =false;
+            }
+            
+            if(coinChance[testCar.cylinderID] - 1 == testCar.position
+               && fabs(testCar.coordinates[2] - 5 * testCar.cylinderID - 0.8) < 0.1)
+            {
+                testCar.coinCount ++;
+                coinChance[testCar.cylinderID] = -1;
+            }
+        }else{
+            isCollison = false;
+        }
+        
         //        if (number[num/2] == 0)
         //        {
         //            number[num/2] = rand() % 10 + 1;
         //        }
+        
+        printf("HP %d   COIN %d\n", testCar.HP, testCar.coinCount);
+        printf("cylinderID %d   position %d\n", testCar.cylinderID, testCar.position);
+        
     }
-    //
-    
-    
-    if (bAnim) fRotate += 0.1f;
     
     glutSwapBuffers();
 }
 
 int main(int argc, char *argv[])
 {
+    initCar();
+    
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
     glutInitWindowSize(1280, 697);
