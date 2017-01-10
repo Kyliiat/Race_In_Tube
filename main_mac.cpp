@@ -1,7 +1,14 @@
-#include <glut/glut.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <math.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#include <GLUT/glut.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
 #include <math.h>
 //#include<Windows.h>
 #define PI 3.141592654
@@ -65,7 +72,15 @@ GLfloat Coin_AMBIENT[] = { 0.6f, 0.3f, 0.0f, 1.0f };
 GLfloat Coin_DIFFUSE[] = { 0.8f, 0.6f, 0.0f, 1.0f };
 GLfloat Coin_SPECULAR[] = { 1.0f, 1.0f, 0.8f, 1.0f };
 
+//mode
+bool startgame=false;
 bool run=false;
+bool gameOver=false;
+bool manyou=false;
+
+//mouse
+float mouseX, mouseY, mouseZ, lastX, lastY;
+
 bool IsOpen=false;
 int wHeight = 0;
 int wWidth = 0;
@@ -98,6 +113,13 @@ bool willChange = false;
 bool doChange = false;
 int changeInterval = 0;
 bool changed = false;
+
+#define MAXNUM 5000
+int barrierChance[MAXNUM];
+int coinChance[MAXNUM];
+bool isBarrier = false;
+bool isCoin = false;
+bool isCollison = false;
 
 typedef struct car{
     GLdouble speed;
@@ -365,6 +387,27 @@ void initCar()
     testCar.coinCount = 0;
     testCar.HP = INITHP;
 }
+
+void reInit()
+{
+    eye[0] = 0;
+    eye[1] = 0.5;
+    eye[2] = -2;
+    center[0] = 0;
+    center[1] = -4;
+    center[2] = 10;
+    stage = 0;
+    num = 20;
+    initCar();
+    memset(barrierChance, 0, sizeof(barrierChance));
+    memset(coinChance, 0, sizeof(coinChance));
+    flag = flag2 = 0;
+    positionY = -3.078;
+    isBarrier = false;
+    isCoin = false;
+    isCollison = false;
+}
+
 
 void drawTires()
 {
@@ -1037,8 +1080,8 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
         }
         else
         {
-            glRotatef(36*num, 0, 0, 1);
-            glTranslatef(0, -positionY, offset*5);
+//            glRotatef(36*num, 0, 0, 1);
+            glTranslatef(0, positionY, offset*5);
         }
         
     }
@@ -1295,7 +1338,7 @@ void drawBarrier(int num)
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, Barrier_DIFFUSE);
     glColor3f(1, 0, 1);
     glEnable(GL_TEXTURE_2D);
-//    glBindTexture(GL_TEXTURE_2D, texture[4]);
+    //    glBindTexture(GL_TEXTURE_2D, texture[4]);
     
     if (barrierTexture[num] == 0)
     {
@@ -1305,12 +1348,12 @@ void drawBarrier(int num)
     
     glBindTexture(GL_TEXTURE_2D, texture[barrierTexture[num]]);
     
-//     switch(randomwall){
-//     case 0:{glBindTexture(GL_TEXTURE_2D, texture[4]);break;}
-//     case 1:{glBindTexture(GL_TEXTURE_2D, texture[5]);break;}
-//     case 2:{glBindTexture(GL_TEXTURE_2D, texture[6]);break;}
-//     case 3:{glBindTexture(GL_TEXTURE_2D, texture[7]);break;}
-//     }
+    //     switch(randomwall){
+    //     case 0:{glBindTexture(GL_TEXTURE_2D, texture[4]);break;}
+    //     case 1:{glBindTexture(GL_TEXTURE_2D, texture[5]);break;}
+    //     case 2:{glBindTexture(GL_TEXTURE_2D, texture[6]);break;}
+    //     case 3:{glBindTexture(GL_TEXTURE_2D, texture[7]);break;}
+    //     }
     
     
     glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
@@ -1360,6 +1403,74 @@ void drawCoin()
     glPopMatrix();
 }
 
+void drawStrokeText(char*string,float x,float y,float z, float sizeX, float sizeY, float sizeZ)
+{
+    char *c;
+    glPushMatrix();
+    glTranslatef(x + eye[0], y + eye[1], z + eye[2]);
+    //x size, y size, z size
+    glScalef(-sizeX, sizeY, sizeZ);
+    
+    for (c=string; *c != '\0'; c++)
+    {
+        glutStrokeCharacter(GLUT_STROKE_ROMAN , *c);
+    }
+    glPopMatrix();
+}
+
+void drawMenu()
+{
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glColor3f(1.0f, 0.0f, 0.0f);
+    char st[500];
+    
+    if (!startgame)
+    {
+        drawStrokeText("Pipeline Racing",37,3,26, 0.08, 0.08, 0.08);
+        glColor3f(0.0f, 1.0f, 0.0f);
+        drawStrokeText("Press SPACEBAR to start game", 63, -35, 35, 0.06, 0.06, 0.06);
+        glColor3f(0.0f, 1.0f, 1.0f);
+        drawStrokeText("Press (q) or (esc) to quit", 53, -45, 35, 0.06, 0.06, 0.06);
+    }
+    else if (!gameOver)
+    {
+        sprintf(st,"HP = %d",testCar.HP);
+        drawStrokeText(st, -26, 9, 26, 0.02, 0.02, 0.02);
+        sprintf(st,"SCORE = %d",testCar.coinCount);
+        drawStrokeText(st, -22, 6, 26, 0.02, 0.02, 0.02);
+        sprintf(st,"CID:%d P:%d",testCar.cylinderID, testCar.position);
+        drawStrokeText(st, -26, 3, 26, 0.02, 0.02, 0.02);
+        /*
+         for (int i = 0; i < 10; i++) {
+         sprintf(st,"%d %d", barrierChance[i+testCar.cylinderID], coinChance[i+testCar.cylinderID]);
+         drawStrokeText(st, -26, - i * 2, 26, 0.02, 0.02, 0.02);
+         }
+         */
+    }
+    else
+    {
+        drawStrokeText("GAMEOVER!", 36, -5, 26, 0.1f, 0.1f, 0.1f);
+        glColor3f(0.0f, 1.0f, 0.0f);
+        drawStrokeText("Press SPACEBAR to continue", 53, -35, 35, 0.06f, 0.06f, 0.06f);
+        glColor3f(0.0f, 1.0f, 1.0f);
+        drawStrokeText("Press (q) or (esc) to quit", 53, -45, 35, 0.06, 0.06, 0.06);
+        run = false;
+    }
+    
+    //check for gameover
+    if (testCar.HP <= 0)
+    {
+        gameOver = true;
+        testCar.HP = 0;
+    }
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    glEnable(GL_TEXTURE_2D);
+    
+}
+
 void updateView(int width, int height)
 {
     glViewport(0, 0, width, height);
@@ -1392,8 +1503,23 @@ void idle()
     glutPostRedisplay();
 }
 
-
-
+void processMousePassiveMotion(int x, int y) {
+    // User must press the SHIFT key to change the
+    // rotation in the X axis
+    mouseX = x;
+    mouseY = y;
+    
+    if (mouseX < 0)
+        mouseX = 0;
+    if (mouseX > wWidth)
+        mouseX = wWidth;
+    
+    if (mouseY < 0)
+        mouseY = 0;
+    if (mouseY > wHeight)
+        mouseY = wHeight;
+    
+}
 
 void key(unsigned char k, int x, int y)
 {
@@ -1469,18 +1595,7 @@ void key(unsigned char k, int x, int y)
             }
             break;
         }
-            /*
-             case 'w': {
-             eye[1] -= 0.2f;
-             center[1] -= 0.2f;
-             break;
-             }
-             case 's': {
-             eye[1] += 0.2f;
-             center[1] += 0.2f;
-             break;
-             }
-             */
+            
         case 'z': {
             eye[2] -= 0.2f;
             center[2] -= 0.2f;
@@ -1492,9 +1607,40 @@ void key(unsigned char k, int x, int y)
             break;
         }
             
-            //change the color of the light0
+        case 'w': {
+            mouseZ += 1.0;
+            break;
+        }
+        case 's': {
+            mouseZ -= 1.0;
+            break;
+        }
+            
         case 'r': {
-            run=!run;
+            if (startgame && !gameOver){
+                manyou = !manyou;
+            }
+            if (run)
+                manyou=false;
+            break;
+        }
+            //change the color of the light0
+        case ' ': {
+            if (!startgame)
+            {
+                startgame = true;
+                run  = true;
+            }
+            else if (!gameOver)
+            {
+                run=!run;
+            }
+            else
+            {
+                reInit();
+                startgame = true;
+                gameOver = false;
+            }
             
             break;
         }
@@ -1504,13 +1650,6 @@ void key(unsigned char k, int x, int y)
     updateView(wWidth, wHeight);
 }
 
-#define MAXNUM 5000
-int barrierChance[MAXNUM];
-int coinChance[MAXNUM];
-bool isBarrier = false;
-bool isCoin = false;
-bool isCollison = false;
-
 void redraw()
 {
     int i;
@@ -1519,10 +1658,27 @@ void redraw()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();                                   // Reset The Current Modelview Matrix
     
-    gluLookAt(eye[0], eye[1], eye[2],
-              center[0], center[1], center[2],
-              0, 1, 0);
-    
+    if (manyou) {
+        
+        gluLookAt(eye[0],eye[1],eye[2] + mouseZ,
+                  center[0] - (mouseX - wWidth/2.0)/100.0 ,
+                  center[1] - (mouseY - wHeight/2.0)/100.0 ,
+                  center[2] + mouseZ,
+                  0, 1, 0);
+        
+        //glTranslatef(0.0f, 0.0f, eye[2]);
+        //glRotatef(mouseX,1.0,0.0,0.0);
+        //glutSolidCube(2); //Our character to follow
+        //glRotatef(mouseY,0.0,1.0,0.0);  //rotate our camera on the y-axis (up and down)
+        //glTranslatef(eye[0],eye[1],mouseZ); //translate the screen to the position of our camera
+        
+    } else {
+        gluLookAt(eye[0], eye[1], eye[2],
+                  center[0], center[1], center[2],
+                  0, 1, 0);
+        mouseZ = 0;
+    }
+    drawMenu();
     
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
@@ -1641,7 +1797,6 @@ void redraw()
         if (willChange) changeInterval++;           // between change signal and real change
         if (changeInterval == 500)
         {
-            printf("dochange\n");
             changeInterval = 0;
             willChange = false;
             doChange = true;
@@ -1874,12 +2029,21 @@ void redraw()
         //            number[num/2] = rand() % 10 + 1;
         //        }
         
-        printf("HP %d   COIN %d\n", testCar.HP, testCar.coinCount);
-        printf("cylinderID %d   position %d\n", testCar.cylinderID, testCar.position);
+        //printf("HP %d   COIN %d\n", testCar.HP, testCar.coinCount);
+        //printf("cylinderID %d   position %d\n", testCar.cylinderID, testCar.position);
         
     }
     
     glutSwapBuffers();
+}
+
+void processMousePassiveMotion2(int x, int y) {
+    int difX=x-lastX; //check the difference between the current x and the last x position
+    int difY=y-lastY; //check the difference between the current y and the last y position
+    lastX=x; //set lastx to the current x position
+    lastY=y; //set lasty to the current y position
+    mouseX += difY; //addition of the difference in the y position
+    mouseY += difX; //addition of the difference in the x position
 }
 
 int main(int argc, char *argv[])
@@ -1894,6 +2058,7 @@ int main(int argc, char *argv[])
     glutDisplayFunc(redraw);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(key);
+    glutPassiveMotionFunc(processMousePassiveMotion);
     drawlist= GenTableList();
     glutIdleFunc(idle);
     init();
