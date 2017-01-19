@@ -79,7 +79,7 @@ bool gameOver=false;
 bool manyou=false;
 
 //mouse
-float mouseX, mouseY, mouseZ, lastX, lastY;
+float mouseX, mouseY, mouseZ, lastX, lastY, fly;
 
 bool IsOpen=false;
 int wHeight = 0;
@@ -93,6 +93,8 @@ bool eyeMoveDown = false;
 
 float eye[] = { 0, 0.5, 0};
 float center[] = { 0, -4, 10 };
+float eyeBackup[] = {0, 0.5, 0};    // 漫游结束恢复状态
+float centerBackup[] = {0, -4, 10};
 float move_x, move_y, move_z;
 GLint number[10000];
 bool Open = false;      // 从上面展开
@@ -1080,7 +1082,7 @@ void drawGrid(int num, int offset, bool barrier, bool coin)
         }
         else
         {
-//            glRotatef(36*num, 0, 0, 1);
+            //            glRotatef(36*num, 0, 0, 1);
             glTranslatef(0, positionY, offset*5);
         }
         
@@ -1407,13 +1409,15 @@ void drawStrokeText(char*string,float x,float y,float z, float sizeX, float size
 {
     char *c;
     glPushMatrix();
+    glWindowPos2i(50-x*1000, 600+y*1000);
     glTranslatef(x + eye[0], y + eye[1], z + eye[2]);
     //x size, y size, z size
     glScalef(-sizeX, sizeY, sizeZ);
-    
+    glColor3d(1.0, 0.0, 0.0);
     for (c=string; *c != '\0'; c++)
     {
         glutStrokeCharacter(GLUT_STROKE_ROMAN , *c);
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
     }
     glPopMatrix();
 }
@@ -1422,47 +1426,35 @@ void drawMenu()
 {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glColor3f(1.0f, 0.0f, 0.0f);
+    glColor3f(1.0f, 1.0f, 0.0f);
     char st[500];
+    float size = 0.0001f;
     
     if (!startgame)
     {
-        drawStrokeText("Pipeline Racing",37,3,26, 0.08, 0.08, 0.08);
+        drawStrokeText("Pipeline Racing",-0.1, 0.025, 0.2,size, size, size);
         glColor3f(0.0f, 1.0f, 0.0f);
-        drawStrokeText("Press SPACEBAR to start game", 63, -35, 35, 0.06, 0.06, 0.06);
+        drawStrokeText("Press SPACEBAR to start game", -0.1, 0, 0.2, size, size, size);
         glColor3f(0.0f, 1.0f, 1.0f);
-        drawStrokeText("Press (q) or (esc) to quit", 53, -45, 35, 0.06, 0.06, 0.06);
+        drawStrokeText("Press (q) or (esc) to quit", -0.1, -0.025, 0.2, size, size, size);
     }
     else if (!gameOver)
     {
+        glColor3f(1.0f, 0.0f, 0.0f);
         sprintf(st,"HP = %d",testCar.HP);
-        drawStrokeText(st, -26, 9, 26, 0.02, 0.02, 0.02);
+        drawStrokeText(st, -0.1, 0.025, 0.2, size, size, size);
         sprintf(st,"SCORE = %d",testCar.coinCount);
-        drawStrokeText(st, -22, 6, 26, 0.02, 0.02, 0.02);
-        sprintf(st,"CID:%d P:%d",testCar.cylinderID, testCar.position);
-        drawStrokeText(st, -26, 3, 26, 0.02, 0.02, 0.02);
-        /*
-         for (int i = 0; i < 10; i++) {
-         sprintf(st,"%d %d", barrierChance[i+testCar.cylinderID], coinChance[i+testCar.cylinderID]);
-         drawStrokeText(st, -26, - i * 2, 26, 0.02, 0.02, 0.02);
-         }
-         */
+        drawStrokeText(st, -0.1, 0, 0.2, size, size, size);
     }
     else
     {
-        drawStrokeText("GAMEOVER!", 36, -5, 26, 0.1f, 0.1f, 0.1f);
+        glColor3f(1.0f, 1.0f, 0.0f);
+        drawStrokeText("GAMEOVER!", -0.1, 0.025, 0.2, size, size, size);
         glColor3f(0.0f, 1.0f, 0.0f);
-        drawStrokeText("Press SPACEBAR to continue", 53, -35, 35, 0.06f, 0.06f, 0.06f);
+        drawStrokeText("Press SPACEBAR to continue", -0.1, 0, 0.2, size, size, size);
         glColor3f(0.0f, 1.0f, 1.0f);
-        drawStrokeText("Press (q) or (esc) to quit", 53, -45, 35, 0.06, 0.06, 0.06);
+        drawStrokeText("Press (q) or (esc) to quit", -0.1, -0.025, 0.2, size, size, size);
         run = false;
-    }
-    
-    //check for gameover
-    if (testCar.HP <= 0)
-    {
-        gameOver = true;
-        testCar.HP = 0;
     }
     
     glMatrixMode(GL_MODELVIEW);
@@ -1616,16 +1608,55 @@ void key(unsigned char k, int x, int y)
             break;
         }
             
+        case 'f': {
+            fly += 1.0;
+            break;
+        }
+            
+        case 'g': {
+            fly -= 1.0;
+            break;
+        }
+            
         case 'r': {
             if (startgame && !gameOver){
+                if (manyou)
+                {
+                    // 恢复状态
+                    eye[0] = eyeBackup[0];
+                    eye[1] = eyeBackup[1];
+                    eye[2] = eyeBackup[2];
+                    center[0] = centerBackup[0];
+                    center[1] = centerBackup[1];
+                    center[2] = centerBackup[2];
+                }
                 manyou = !manyou;
+                // 备份状态
+                eyeBackup[0] = eye[0];
+                eyeBackup[1] = eye[1];
+                eyeBackup[2] = eye[2];
+                centerBackup[0] = center[0];
+                centerBackup[1] = center[1];
+                centerBackup[2] = center[2];
             }
             if (run)
+            {
                 manyou=false;
+            }
             break;
         }
             //change the color of the light0
         case ' ': {
+            if (manyou)
+            {
+                manyou = false;
+                eye[0] = eyeBackup[0];
+                eye[1] = eyeBackup[1];
+                eye[2] = eyeBackup[2];
+                center[0] = centerBackup[0];
+                center[1] = centerBackup[1];
+                center[2] = centerBackup[2];
+            }
             if (!startgame)
             {
                 startgame = true;
@@ -1660,7 +1691,7 @@ void redraw()
     
     if (manyou) {
         
-        gluLookAt(eye[0],eye[1],eye[2] + mouseZ,
+        gluLookAt(eye[0],eye[1] + fly,eye[2] + mouseZ,
                   center[0] - (mouseX - wWidth/2.0)/100.0 ,
                   center[1] - (mouseY - wHeight/2.0)/100.0 ,
                   center[2] + mouseZ,
@@ -2005,6 +2036,7 @@ void redraw()
                     if(testCar.HP == 0)
                     {
                         //GAME OVER
+                        gameOver = true;
                     }
                 }else{
                     if(!doChange)
@@ -2065,3 +2097,4 @@ int main(int argc, char *argv[])
     glutMainLoop();
     return 0;
 }
+
